@@ -20,13 +20,12 @@ def procesarCadenaRetorno(cadena):
     return 0
 
 def creaBaseRRD(direccionIP):
-  dirSinPuntos = direccionIP.replace(".","_")
+  dirSinPuntos = direccionIP.replace(".","_")	#Para el nombre de las carpetas para cada agente
   directorio = os.getcwd() + "/" + dirSinPuntos
   print "directorio" + directorio
   
-  if not os.path.exists(directorio):
+  if not os.path.exists(directorio):		#si el path no existe, hacer una carpeta
     os.makedirs(directorio)
-  #  print "creado"
   
   ret = rrdtool.create(directorio + "/net3.rrd",
                      "--start",'N',
