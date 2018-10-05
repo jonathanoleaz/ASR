@@ -199,8 +199,6 @@ def graficaRR(nombre, direccionIP):
              "PRINT:salidaLAST:%6.2le LAST")
 
     value = procesarCadenaRetorno(ret4[2][0])
-    print "el valor del ret4 es: "
-    print ret4
     #if pingSalida > 2:
      # enviaAlerta("PING SALIDA POR ENCIMA DEL LIMITE", directorio+"/netPING.png")
      # print "Enviare correo!!"
@@ -218,7 +216,7 @@ def graficaRR(nombre, direccionIP):
              "PRINT:salidaLAST:%6.2le LAST")
 
     value = procesarCadenaRetorno(ret5[2][0])
-    enviaCorreoSiEsMayor(value, LIM_TCPC, "TCPconnections por encima de"+str(LIM_TCPC), directorio+"/netTCP.png")
+    enviaCorreoSiEsMayor(value, LIM_TCPC, "TCPconnections por encima de"+str(LIM_TCPC), directorio+"/netPING.png")
 
 	
     time.sleep(15)
