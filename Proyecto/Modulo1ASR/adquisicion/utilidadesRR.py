@@ -16,6 +16,7 @@ LIM_TCPC=100;
 def enviaCorreoSiEsMayor(valor, valorLimite, mensaje, rutaArchivo):
 	if valor > valorLimite:
 		# enviaAlerta(mensaje, rutaArchivo)
+		print valor
 		print "Correo por"+mensaje
 	
 
@@ -208,16 +209,16 @@ def graficaRR(nombre, direccionIP):
     ret5 = rrdtool.graph(directorio+"/netTCPc.png",
              "--start",str(tiempo_nuevo),
         #         "--end","N",
-             "--title=Respuestas PING",  
+             "--title=Conexiones ICMP",  
              "--legend-direction=bottomup",
-             "--vertical-label=Paq/s",
+             "--vertical-label=Con/s",
              "DEF:inoctets="+directorio+"/net3.rrd:outoctetsTCP_Cons:AVERAGE",
-             "AREA:inoctets#F00F0F:PINGs de entrada",
+             "AREA:inoctets#F00F0F:Conexiones",
               "VDEF:salidaLAST=inoctets,LAST",
              "PRINT:salidaLAST:%6.2le LAST")
 
     value = procesarCadenaRetorno(ret5[2][0])
-    enviaCorreoSiEsMayor(value, LIM_TCPC, "TCPconnections por encima de"+str(LIM_TCPC), directorio+"/netPING.png")
+    enviaCorreoSiEsMayor(value, LIM_TCPC, "TCPconnections por encima de"+str(LIM_TCPC), directorio+"/netTCP.png")
 
 	
     time.sleep(15)
