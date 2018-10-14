@@ -5,6 +5,7 @@
   Python Version: 2.7
 '''
 from Tkinter import *
+from tkcalendar import Calendar
 from threading import Thread
 from multiprocessing.dummy import Pool as ThreadPool
 
@@ -16,6 +17,8 @@ from adquisicion.resumen import obtenerResumen
 from adquisicion.agentesGrafico import agregarAgente, eliminarAgente
 from adquisicion.masInf import mostrarMasInfo
 from adquisicion.utilidadesRR import *
+
+from prediccion.predecir import realizar_prediccion
 
 def hiloParaBaseRR(nombre,direccionIP,comunidad):
   creaBaseRRD(direccionIP, comunidad)
@@ -99,7 +102,6 @@ def adquiereObjDeAgentes(nada):
   i = 0
 
   while(i < 1):
-#   print "vamos de nuevo"
     datosNec = obtenerResumenTODO()
     # print(datosNec)
     subproceso2 = Thread(target=demonNuevosAgtes, args=(datosNec,))
@@ -192,6 +194,38 @@ def eliminaAgente():
   clearVentana()
   eliminarAgente(root)
 
+def espacioEntreComponentes(root):
+  espacio = Label(root, text="\n")
+  espacio.pack()
+
+def seleccionarFechas():
+  # Metodo para seleccionar las fechas de la prediccion
+  l_inicio = Label(root, text="Seleccione fecha de inicio")
+  cal_inicio = Calendar(root, font="Arial 12", year=2018, month=10, day=1)
+  l_horaI = Label(root, text="Seleccione la hora")  
+  hora_inicio = Entry(root)
+  hora_inicio.insert(END, '00:00')
+  l_inicio.pack()
+  cal_inicio.pack()
+  l_horaI.pack()
+  hora_inicio.pack()
+
+  espacioEntreComponentes(root)
+  l_final = Label(root, text="Seleccione fecha de termino")
+  cal_final = Calendar(root, font="Arial 12", year=2018, month=10, day=2)
+  l_horaF = Label(root, text="Seleccione la hora")
+  hora_final = Entry(root)
+  hora_final.insert(END, '23:59')
+  l_final.pack()
+  cal_final.pack()
+  l_horaF.pack()
+  hora_final.pack()
+
+  # Boton para realizar las predicciones  
+  espacioEntreComponentes(root)
+  boton_predecir = Button(root, text="Predecir", command= lambda: realizar_prediccion(\
+    cal_inicio.selection_get(), hora_inicio.get(), cal_final.selection_get(), hora_final.get()))
+  boton_predecir.pack()
 
 # Creacion de la ventana
 root = Tk()
@@ -211,9 +245,9 @@ agenteMenu.add_command(label="Eliminar agente", command=eliminaAgente)
 menubar.add_cascade(label="Agente", menu=agenteMenu)
 
 # Creacion y configuracion de los item de Grafica
-graficaMenu = Menu(menubar, tearoff=0)
-graficaMenu.add_command(label="Ver Graficas")
-menubar.add_cascade(label="Graficas", menu=graficaMenu)
+prediccionMenu = Menu(menubar, tearoff=0)
+prediccionMenu.add_command(label="Prediccion", command=seleccionarFechas)
+menubar.add_cascade(label="Prediccion", menu=prediccionMenu)
 
 # Correr metodo dentro de hilo para la adquisicion de datos de la mib de agentes
 print "ya estoy adquiriendo datos"
