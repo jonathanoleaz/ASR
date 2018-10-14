@@ -126,7 +126,7 @@ def llenaBaseRRD(nombre, direccionIP, comunidad):
          + str(total_input_trafficTCP) + ':' + str(total_output_trafficTCP) + ':' \
           + str(total_input_trafficPING) + ':' + str(total_output_trafficPING) + ':' + str(total_output_trafficTCP_Cons) 
 
-    # print "desde: "+direccionIP+" Valor: "+valor
+    
     ret = rrdtool.update(directorio + "/agente.rrd", valor)			#Se actualiza la BD en los valores adquiridos via SNMP
     rrdtool.dump(directorio + "/agente.rrd", directorio + "/agente.xml")		#Se pondran los datos de la BD en tales archivos
     time.sleep(2)
@@ -136,7 +136,9 @@ def llenaBaseRRD(nombre, direccionIP, comunidad):
       # Se obtienen los identificadores que estan en el archivo de procesadores
       proc_arch = open(directorio + "/procesadores.txt", "r")
       identificadores = proc_arch.readlines()
-      adicionInfoProcesadoresAgente(directorio, identificadores, comunidad, direccionIP)
+
+      # Se agrega la informacion del agente referente a recursos
+      adicionInfoRecursosAgente(directorio, identificadores, comunidad, direccionIP)
 
 
   if ret:
@@ -144,7 +146,6 @@ def llenaBaseRRD(nombre, direccionIP, comunidad):
     time.sleep(300)
   
 def graficaRR(nombre, direccionIP):
-  
   tiempo_actual = int(time.time())
   tiempo_final = tiempo_actual - 86400
   tiempo_inicial = tiempo_final - 25920000
@@ -240,5 +241,9 @@ def graficaRR(nombre, direccionIP):
     value = procesarCadenaRetorno(ret5[2][0])
     enviaCorreoSiEsMayor(value, LIM_TCPC, "TCPconnections por encima de"+str(LIM_TCPC), directorio+"/netPING.png")
     
+    # Graficado de recursos
+    graficaRecursosAgente(directorio, tiempo_nuevo)
+
+    # Tiempo de espera para hacer grafica
     time.sleep(15)
 
