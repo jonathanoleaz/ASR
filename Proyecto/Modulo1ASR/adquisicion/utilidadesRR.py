@@ -6,43 +6,43 @@ import datetime
 
 from getSNMP import consultaSNMP
 from notify import enviaAlerta
+from recursos import *
 
-LIM_ICMP=100;
-LIM_PING=100;
-LIM_UDP=100;
-LIM_TCP=100;
-LIM_TCPC=100;
+LIM_ICMP = 100;
+LIM_PING = 100;
+LIM_UDP = 100;
+LIM_TCP = 100;
+LIM_TCPC = 100;
+
+# OID's
+INPUT_ICMP = '1.3.6.1.2.1.5.1.0'
+OUTPUT_ICMP = '1.3.6.1.2.1.5.14.0'
 
 def enviaCorreoSiEsMayor(valor, valorLimite, mensaje, rutaArchivo):
-	if valor > valorLimite:
-		# enviaAlerta(mensaje, rutaArchivo)
-		print valor
-		print "Correo por"+mensaje
+	if valor > valorLimite: # El valor excede lo esperado
+		enviaAlerta(mensaje, rutaArchivo)		
 	
-
 def procesarCadenaRetorno(cadena):
+  # Primero, se limpia la cadena
   cadena = cadena.lstrip()
   valor = cadena.split(" ")
 
-  print "Valor: " + str(valor)
-
   try:
+    # Se convierte a un float
     float(valor[0])    
     return float(valor[0])
   except ValueError:    
     return 0
 
-#Funcion que crea una BD de RRDtool por cada agente, dentro de una carpeta cuyo nombre es su IP
-def creaBaseRRD(direccionIP):
+# Funcion que crea una BD de RRDtool por cada agente, dentro de una carpeta cuyo nombre es su IP
+def creaBaseRRD(direccionIP, comunidad):
   dirSinPuntos = direccionIP.replace(".","_")			#Se quitan los puntos de la IP y se ponen _
-  directorio = os.getcwd() + "/" + dirSinPuntos			#Se crea la cadena para la ruta relativa del directorio para cada agente,
-  #print "directorio" + directorio
+  directorio = os.getcwd() + "/" + dirSinPuntos			#Se crea la cadena para la ruta relativa del directorio para cada agente,  
   
   if not os.path.exists(directorio):
     os.makedirs(directorio)
-  #  print "creado"
   
-  ret = rrdtool.create(directorio + "/net3.rrd",
+  ret = rrdtool.create(directorio + "/agente.rrd",
                      "--start",'N',
                      "--step",'15',
                      "DS:inoctetsICMP:COUNTER:600:U:U",
@@ -67,20 +67,39 @@ def creaBaseRRD(direccionIP):
   if ret:
     print rrdtool.error()
 
+  # Creacion de la base de datos de recursos (procesador y memoria)
+  # Primero, se debe de saber cuantos procesadores tiene el agente
+  procesadores = obtenerProcesadores(comunidad, direccionIP)
+  if len(procesadores) > 0: # Si se hace la base
+    creacionBaseRecursos(directorio, len(procesadores))
+
+    # Se obtienen los identificadores de los procesadores 
+    identificadores = []
+    for proc in procesadores:
+      datos = proc.split('=')
+      ident = datos[0].rstrip().split('.')[1]
+      identificadores.append(ident)
+
+    # Se hace un archivo para que lo pueda leer llenaBase & grafica
+    proc_arch = open(directorio + "/procesadores.txt", "w")
+    for ide in identificadores:
+      proc_arch.write(ide + "\n")
+    proc_arch.close()
+
 #Funcion que va introducinedo en la BD de RRDtool los datos adquiridos por peticiones SNMP
-def llenaBaseRRD(nombre, direccionIP, comunidad):
-  #print "Nombre:"+nombre+" IP:"+direccionIP+" Comm:"+comunidad
+def llenaBaseRRD(nombre, direccionIP, comunidad):  
   comunidad = comunidad.strip()				#Se quitan los caracteres de linea como \n \t \r de la cadena 
   dirSinPuntos = direccionIP.replace(".","_")		
   directorio = os.getcwd() + "/" + dirSinPuntos
   i = 0
 
   while (1):
-    i=i+1
+    i = i + 1
+
     total_input_trafficICMP = int(
-      consultaSNMP(comunidad, direccionIP,'1.3.6.1.2.1.5.1.0')) 	#Paquetes ICMP de entrada
+      consultaSNMP(comunidad, direccionIP, INPUT_ICMP)) 	#Paquetes ICMP de entrada
     total_output_trafficICMP = int(																#y de salida
-      consultaSNMP(comunidad, direccionIP,'1.3.6.1.2.1.5.14.0'))	
+      consultaSNMP(comunidad, direccionIP, OUTPUT_ICMP))	
 
     total_input_trafficUDP = int(
       consultaSNMP(comunidad, direccionIP,'1.3.6.1.2.1.7.1.0')) 	#Paquetes UDP de entrada y salida
@@ -108,8 +127,8 @@ def llenaBaseRRD(nombre, direccionIP, comunidad):
           + str(total_input_trafficPING) + ':' + str(total_output_trafficPING) + ':' + str(total_output_trafficTCP_Cons) 
 
     # print "desde: "+direccionIP+" Valor: "+valor
-    ret=rrdtool.update(directorio+"/net3.rrd", valor)			#Se actualiza la BD en los valores adquiridos via SNMP
-    rrdtool.dump(directorio+"/net3.rrd",directorio+"/net3.xml")		#Se pondran los datos de la BD en tales archivos
+    ret=rrdtool.update(directorio+"/agente.rrd", valor)			#Se actualiza la BD en los valores adquiridos via SNMP
+    rrdtool.dump(directorio+"/agente.rrd",directorio+"/agente.xml")		#Se pondran los datos de la BD en tales archivos
     time.sleep(2)
 
   if ret:
@@ -121,36 +140,32 @@ def graficaRR(nombre, direccionIP):
   tiempo_actual = int(time.time())
   tiempo_final = tiempo_actual - 86400
   tiempo_inicial = tiempo_final - 25920000
-  archivo=open("adquisicion/comienzo.txt",'r')
-  tiempo_nuevo=archivo.readline().strip()
+  archivo = open("adquisicion/comienzo.txt",'r')
+  tiempo_nuevo = archivo.readline().strip()
   print tiempo_nuevo
   archivo.close()
 
   dirSinPuntos = direccionIP.replace(".","_")		#Se pasa la direccion IP con puntos a formato con "_"
   directorio = os.getcwd() + "/" + dirSinPuntos		#Se obtiene el directorio en el que deben guardarse las graficas .png
-  #print "DIRECTORIO --> " + directorio
   
   t = 1
-  while (1):    
-    #print "fifo"
+  while (1):        
     t = t + 1;
-    ret = rrdtool.graph(directorio+"/netICMP.png",
+    ret = rrdtool.graph(directorio + "/netICMP.png",
              "--start",str(tiempo_nuevo),
         #         "--end","N",
              "--title=Trafico ICMP",  
              "--legend-direction=bottomup",
              "--vertical-label=Paq/s",
-             "DEF:inoctets="+directorio+"/net3.rrd:inoctetsICMP:AVERAGE",
-             "DEF:outoctets="+directorio+"/net3.rrd:outoctetsICMP:AVERAGE",
+             "DEF:inoctets="+directorio+"/agente.rrd:inoctetsICMP:AVERAGE",
+             "DEF:outoctets="+directorio+"/agente.rrd:outoctetsICMP:AVERAGE",
              "LINE2:inoctets#00FF00:Trafico de entrada",
              "LINE2:outoctets#0000FF:Trafico de salida",
 						 "VDEF:entradaLAST=inoctets,LAST",
              "PRINT:entradaLAST:%6.2le LAST")
 
     value = procesarCadenaRetorno(ret[2][0])
-    enviaCorreoSiEsMayor(value, LIM_ICMP, "ICMP por encima de"+str(LIM_ICMP), directorio+"/netICMP.png")
-
-    # print "Ret ->" + str(ret[2])
+    enviaCorreoSiEsMayor(value, LIM_ICMP, "ICMP por encima de"+str(LIM_ICMP), directorio+"/netICMP.png")    
 
     ret2 = rrdtool.graph(directorio+"/netUDP.png",
              "--start",str(tiempo_nuevo),
@@ -158,16 +173,15 @@ def graficaRR(nombre, direccionIP):
              "--title=Trafico UDP",  
              "--legend-direction=bottomup",
              "--vertical-label=Paq/s",
-             "DEF:inoctets="+directorio+"/net3.rrd:inoctetsUDP:AVERAGE",
-             "DEF:outoctets="+directorio+"/net3.rrd:outoctetsUDP:AVERAGE",
+             "DEF:inoctets="+directorio+"/agente.rrd:inoctetsUDP:AVERAGE",
+             "DEF:outoctets="+directorio+"/agente.rrd:outoctetsUDP:AVERAGE",
              "LINE2:inoctets#00FF00:Trafico de entrada",
              "LINE2:outoctets#0000FF:Trafico de salida",
              "VDEF:entradaLAST=inoctets,LAST",
              "PRINT:entradaLAST:%6.2le LAST")
 
     value = procesarCadenaRetorno(ret2[2][0])
-    enviaCorreoSiEsMayor(value, LIM_UDP, "UDP por encima de"+str(LIM_UDP), directorio+"/netUDP.png")
-    # print "Ret2 ->" + str(ret[2])
+    enviaCorreoSiEsMayor(value, LIM_UDP, "UDP por encima de"+str(LIM_UDP), directorio+"/netUDP.png")    
 
     ret3 = rrdtool.graph(directorio+"/netTCP.png",
              "--start",str(tiempo_nuevo),
@@ -175,8 +189,8 @@ def graficaRR(nombre, direccionIP):
              "--title=Trafico TCP",  
              "--legend-direction=bottomup",
              "--vertical-label=Paq/s",
-             "DEF:inoctets="+directorio+"/net3.rrd:inoctetsTCP:AVERAGE",
-             "DEF:outoctets="+directorio+"/net3.rrd:outoctetsTCP:AVERAGE",
+             "DEF:inoctets="+directorio+"/agente.rrd:inoctetsTCP:AVERAGE",
+             "DEF:outoctets="+directorio+"/agente.rrd:outoctetsTCP:AVERAGE",
              "LINE2:inoctets#00FF00:Trafico de entrada",
              "LINE2:outoctets#0000FF:Trafico de salida",
               "VDEF:entradaLAST=inoctets,LAST",
@@ -191,8 +205,8 @@ def graficaRR(nombre, direccionIP):
              "--title=Respuestas PING",  
              "--legend-direction=bottomup",
              "--vertical-label=Paq/s",
-             "DEF:inoctets="+directorio+"/net3.rrd:inoctetsPING:AVERAGE",
-             "DEF:outoctets="+directorio+"/net3.rrd:outoctetsPING:AVERAGE",
+             "DEF:inoctets="+directorio+"/agente.rrd:inoctetsPING:AVERAGE",
+             "DEF:outoctets="+directorio+"/agente.rrd:outoctetsPING:AVERAGE",
              "LINE2:inoctets#00FF00:PINGs de entrada",
              "LINE2:outoctets#0000FF:PINGs de salida",
              "VDEF:salidaLAST=outoctets,LAST",
@@ -210,14 +224,13 @@ def graficaRR(nombre, direccionIP):
              "--title=Conexiones ICMP",  
              "--legend-direction=bottomup",
              "--vertical-label=Con/s",
-             "DEF:inoctets="+directorio+"/net3.rrd:outoctetsTCP_Cons:AVERAGE",
+             "DEF:inoctets="+directorio+"/agente.rrd:outoctetsTCP_Cons:AVERAGE",
              "AREA:inoctets#F00F0F:Conexiones",
               "VDEF:salidaLAST=inoctets,LAST",
              "PRINT:salidaLAST:%6.2le LAST")
 
     value = procesarCadenaRetorno(ret5[2][0])
     enviaCorreoSiEsMayor(value, LIM_TCPC, "TCPconnections por encima de"+str(LIM_TCPC), directorio+"/netPING.png")
-
-	
+    
     time.sleep(15)
 

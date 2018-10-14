@@ -1,1 +1,2 @@
-localhost 1 161 pinguinos
+localhost 1 161 public
+192.168.0.16 1 161 miLubuntu
