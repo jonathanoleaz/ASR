@@ -127,9 +127,17 @@ def llenaBaseRRD(nombre, direccionIP, comunidad):
           + str(total_input_trafficPING) + ':' + str(total_output_trafficPING) + ':' + str(total_output_trafficTCP_Cons) 
 
     # print "desde: "+direccionIP+" Valor: "+valor
-    ret=rrdtool.update(directorio+"/agente.rrd", valor)			#Se actualiza la BD en los valores adquiridos via SNMP
-    rrdtool.dump(directorio+"/agente.rrd",directorio+"/agente.xml")		#Se pondran los datos de la BD en tales archivos
+    ret = rrdtool.update(directorio + "/agente.rrd", valor)			#Se actualiza la BD en los valores adquiridos via SNMP
+    rrdtool.dump(directorio + "/agente.rrd", directorio + "/agente.xml")		#Se pondran los datos de la BD en tales archivos
     time.sleep(2)
+
+    # Llenado de la base de recursos
+    if os.path.exists(directorio + "/recursos.rrd"): # Tiene la base de recursos
+      # Se obtienen los identificadores que estan en el archivo de procesadores
+      proc_arch = open(directorio + "/procesadores.txt", "r")
+      identificadores = proc_arch.readlines()
+      adicionInfoProcesadoresAgente(directorio, identificadores, comunidad, direccionIP)
+
 
   if ret:
     print rrdtool.error()

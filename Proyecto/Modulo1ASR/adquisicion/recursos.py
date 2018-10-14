@@ -1,6 +1,8 @@
 import rrdtool
 import subprocess
 
+from getSNMP import consultaSNMP
+
 OID_PROCESSOR_TABLE = '1.3.6.1.2.1.25.3.3.1.2'
 
 def creacionBaseRecursos(directorio, num_procs):
@@ -38,3 +40,15 @@ def obtenerProcesadores(comunidad, ipAddr):
   except subprocess.CalledProcessError, e:
     return []
 
+def adicionInfoProcesadoresAgente(directorio, identificadores, comunidad, ipAddr):
+  valores = "N:"
+  for ide in identificadores: 
+    ide = ide.replace('\n', '')   
+    carga_CPU = int(consultaSNMP(comunidad, ipAddr, OID_PROCESSOR_TABLE + "." + ide))
+    valores += str(carga_CPU) + ":"
+  
+  valores = valores[:-1]
+  valores += ":0"
+  print ipAddr + "->" + valores
+  rrdtool.update(directorio + '/recursos.rrd', valores)
+  # rrdtool.dump('trend1.rrd','trend.xml')
