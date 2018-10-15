@@ -14,7 +14,7 @@
 		<max>NaN</max>
 
 		<!-- PDP Status -->
-		<last_ds>40</last_ds>
+		<last_ds>290</last_ds>
 		<value>NaN</value>
 		<unknown_sec> 2 </unknown_sec>
 	</ds>
@@ -40,7 +40,7 @@
 		<max>NaN</max>
 
 		<!-- PDP Status -->
-		<last_ds>1334</last_ds>
+		<last_ds>404</last_ds>
 		<value>NaN</value>
 		<unknown_sec> 2 </unknown_sec>
 	</ds>
@@ -53,7 +53,7 @@
 		<max>NaN</max>
 
 		<!-- PDP Status -->
-		<last_ds>1150</last_ds>
+		<last_ds>192</last_ds>
 		<value>NaN</value>
 		<unknown_sec> 2 </unknown_sec>
 	</ds>
@@ -66,7 +66,7 @@
 		<max>NaN</max>
 
 		<!-- PDP Status -->
-		<last_ds>192</last_ds>
+		<last_ds>14</last_ds>
 		<value>NaN</value>
 		<unknown_sec> 2 </unknown_sec>
 	</ds>
@@ -79,7 +79,7 @@
 		<max>NaN</max>
 
 		<!-- PDP Status -->
-		<last_ds>208</last_ds>
+		<last_ds>17</last_ds>
 		<value>NaN</value>
 		<unknown_sec> 2 </unknown_sec>
 	</ds>
@@ -92,7 +92,7 @@
 		<max>NaN</max>
 
 		<!-- PDP Status -->
-		<last_ds>0</last_ds>
+		<last_ds>145</last_ds>
 		<value>NaN</value>
 		<unknown_sec> 2 </unknown_sec>
 	</ds>
@@ -105,7 +105,7 @@
 		<max>NaN</max>
 
 		<!-- PDP Status -->
-		<last_ds>0</last_ds>
+		<last_ds>150</last_ds>
 		<value>NaN</value>
 		<unknown_sec> 2 </unknown_sec>
 	</ds>
