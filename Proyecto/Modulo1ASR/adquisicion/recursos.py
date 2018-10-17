@@ -13,6 +13,11 @@ from getSNMP import consultaSNMP
 
 OID_PROCESSOR_TABLE = '1.3.6.1.2.1.25.3.3.1.2'
 
+OID_DESC_STORAGE_TABLE = '1.3.6.1.2.1.25.2.3.1.3' #con este oid se obtienen los nombres de los recursos tipo storage
+OID_INDEX_STORAGE_TABLE ='1.3.6.1.2.1.25.2.3.1.1' #con este oid se obtienen los indices de los recursos tipo storage
+OID_USED_STORAGE_TABLE = '1.3.6.1.2.1.25.2.3.1.6' #oid para el espacio usado 
+OID_TOTAL_STORAGE_TABLE ='1.3.6.1.2.1.25.2.3.1.5' #oid para el espacio total 
+
 OID_MEM_SIZE = '1.3.6.1.2.1.25.2.3.1.5'
 OID_MEM_USED = '1.3.6.1.2.1.25.2.3.1.6'
 
@@ -37,6 +42,24 @@ def creacionBaseRecursos(directorio, num_procs):
                      "--step",'15',
                      datasources, rra)
 
+def creacionBaseMemoria(directorio, indices):    #funcion que crea la base del uso de memoria y disco duro
+  # Se procede a crear la base de datos round-robin
+  datasources = []
+  rra = []
+
+  # Se generan los datasources de los procesadores
+  for ind in indices:
+    dataStr = "DS:strg" + ind+ "load:GAUGE:600:U:U" 
+    datasources.append(dataStr)
+    rraStr = "RRA:AVERAGE:0.5:1:600"
+    rra.append(rraStr)
+    print str(ind)
+
+  ret = rrdtool.create(directorio + "/memoria.rrd",
+                     "--start",'N',
+                     "--step",'15',
+                     datasources, rra)
+
 def obtenerProcesadores(comunidad, ipAddr):
   comunidad = comunidad.strip().lstrip()    
   snmpWalk = 'snmpwalk -v2c -c ' + comunidad + ' ' + ipAddr + ' ' + OID_PROCESSOR_TABLE
@@ -46,10 +69,51 @@ def obtenerProcesadores(comunidad, ipAddr):
     retorno = subprocess.check_output(snmpWalk, shell=True)
     cargas = retorno.split('\n')
     cargas = cargas[:-1]
-
+    #print cargas
     return cargas
   except subprocess.CalledProcessError, e:
     return []
+
+#funcion que devuelve en un array los nombres de los storage dada una ip y comunidad
+def obtenerStorageNames(comunidad, ipAddr):
+  comunidad = comunidad.strip().lstrip()    
+  snmpWalk = 'snmpwalk -v2c -c ' + comunidad + ' ' + ipAddr + ' ' + OID_DESC_STORAGE_TABLE
+  nombres = []
+  # Se realiza la consulta
+  try:
+    retorno = subprocess.check_output(snmpWalk, shell=True)
+    cargas = retorno.split('\n')
+    cargas = cargas[:-1]
+    #print "Cargas de storage: "+str(cargas.split(':')[0])
+    
+    for cr in cargas:
+      aux=cr.split("STRING:")[-1]
+      nombres.append(aux.strip())
+
+    return nombres
+  except subprocess.CalledProcessError, e:
+    return []
+
+#funcion que devuelve en un array los indices de los storage dada una ip y comunidad
+def obtenerStorageIndices(comunidad, ipAddr):
+  comunidad = comunidad.strip().lstrip()    
+  snmpWalk = 'snmpwalk -v2c -c ' + comunidad + ' ' + ipAddr + ' ' + OID_INDEX_STORAGE_TABLE
+  nombres = []
+  # Se realiza la consulta
+  try:
+    retorno = subprocess.check_output(snmpWalk, shell=True)
+    cargas = retorno.split('\n')
+    cargas = cargas[:-1]
+    #print "Cargas de storage: "+str(cargas.split(':')[0])
+    
+    for cr in cargas:
+      aux=cr.split("INTEGER:")[-1]
+      nombres.append(aux.strip())
+
+    return nombres
+  except subprocess.CalledProcessError, e:
+    return []
+
 
 def adicionInfoRecursosAgente(directorio, identificadores, comunidad, ipAddr):
   valores = "N:"
@@ -57,6 +121,7 @@ def adicionInfoRecursosAgente(directorio, identificadores, comunidad, ipAddr):
   # Parte de informacion de procesadores
   for ide in identificadores: 
     ide = ide.replace('\n', '')   
+    #print comunidad+"-"+ipAddr+"-"+OID_PROCESSOR_TABLE+"."+ide
     carga_CPU = int(consultaSNMP(comunidad, ipAddr, OID_PROCESSOR_TABLE + "." + ide))
     valores += str(carga_CPU) + ":"
   
@@ -70,6 +135,27 @@ def adicionInfoRecursosAgente(directorio, identificadores, comunidad, ipAddr):
   valores += ":" + str(pct_used)  
   rrdtool.update(directorio + '/recursos.rrd', valores)
   # rrdtool.dump('trend1.rrd','trend.xml')
+
+
+def adicionInfoStorageAgente(directorio, indices, comunidad, ipAddr):
+  valores = "N:"
+
+  # Parte de informacion de procesadores
+  for ide in indices: 
+    ide = ide.replace('\n', '')   
+    #print comunidad+"-"+ipAddr+"-"+OID_PROCESSOR_TABLE+"."+ide
+    usado = int(consultaSNMP(comunidad, ipAddr, OID_USED_STORAGE_TABLE + "." + ide))
+    total = int(consultaSNMP(comunidad, ipAddr, OID_TOTAL_STORAGE_TABLE + "." + ide))
+    if(total==0):
+      total=0.001;
+    percent=int((float(usado)/float(total))*100)
+    valores += str(percent) + ":"
+  
+  valores = valores[:-1]
+  print "Values: "+valores
+  #valores += ":" + str(percent)  
+  rrdtool.update(directorio + '/memoria.rrd', valores)
+  rrdtool.dump(directorio +'/memoria.rrd',directorio +'/memoria.xml')
 
 def graficaRecursosAgente(directorio, tiempo_inicio):
   # Se lee el archivo, para saber cuantas graficas se haran
@@ -85,6 +171,28 @@ def graficaRecursosAgente(directorio, tiempo_inicio):
 
   # Propiedades para la memoria
   propiedades_recursos.append(generacionPropiedadesMemoriaGrafica(directorio, tiempo_inicio))
+
+  # Se grafican todos los recursos
+  for propiedad in propiedades_recursos:
+    grafica(propiedad)
+
+def graficaStorageAgente(directorio, tiempo_inicio):
+  # Se lee el archivo, para saber cuantas graficas se haran
+  proc_arch = open(directorio + "/storages.txt", "r")
+  lineasLeidas = proc_arch.readlines()
+  nombres=[]
+  indices=[]
+  for linea in lineasLeidas:
+    nombres.append(linea.split("<<-->>")[1])
+    indices.append(linea.split("<<-->>")[0])
+  
+  numOfStorages=len(lineasLeidas)
+  # Se generan las propiedades de las graficas
+  propiedades_recursos = []  
+
+  # Primero los procesadores
+  for i in range(numOfStorages):
+    propiedades_recursos.append(generacionPropiedadesStorageGrafica(directorio, tiempo_inicio, nombres[i], indices[i]))
 
   # Se grafican todos los recursos
   for propiedad in propiedades_recursos:
@@ -128,6 +236,31 @@ def generacionPropiedadesMemoriaGrafica(directorio, tiempo_inicio):
   propiedades.append("--vertical-label=Uso de Memoria")  
   propiedades.append('--vertical-label')
   propiedades.append("Uso de Memoria (%)")
+  propiedades.append('--lower-limit=0')  
+  propiedades.append('--upper-limit=100')
+  propiedades.append('--rigid')
+  propiedades.append(definicion)
+  propiedades.append(color)
+
+  return propiedades
+
+def generacionPropiedadesStorageGrafica(directorio, tiempo_inicio, nombre, index):
+  propiedades = []
+  grafica = directorio + "/memoria.rrd"
+
+  # Cadenas relativas a la grafica de la linea
+  definicion = "DEF:Memory_Used=" + grafica + ":strg"+index+"load:AVERAGE"
+  color = "AREA:Memory_Used" + hex_code_colors() + ":Memory_Used"
+  
+  # Se llena el arreglo con las propiedades
+  nombre=nombre.replace("/","_")
+  nombre=nombre.replace("\\","_")
+  propiedades.append(directorio + "/"+nombre+".png")
+  propiedades.append("--start")
+  propiedades.append(tiempo_inicio)  
+  propiedades.append("--vertical-label=Uso de Memoria")  
+  propiedades.append('--vertical-label')
+  propiedades.append("Espacio usado: (%)")
   propiedades.append('--lower-limit=0')  
   propiedades.append('--upper-limit=100')
   propiedades.append('--rigid')

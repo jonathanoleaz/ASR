@@ -77,18 +77,39 @@ def creaBaseRRD(direccionIP, comunidad):
     identificadores = []
     for proc in procesadores:
       datos = proc.split('=')
-      ident = datos[0].rstrip().split('.')[1]
+      ident = datos[0].rstrip().split('.')[-1]
+      #print "datos:"+str(datos)
+      #print "ident:"+ident
       identificadores.append(ident)
 
     # Se hace un archivo para que lo pueda leer llenaBase & grafica
     proc_arch = open(directorio + "/procesadores.txt", "w")
     for ide in identificadores:
       proc_arch.write(ide + "\n")
+      #print ide
     proc_arch.close()
+
+  ########---------------
+  # Creacion de base de datos para uso de diusco duro y memoria
+  #Primero, se obtienen las descripciones de los storage
+
+  storage_nombres = obtenerStorageNames(comunidad, direccionIP)
+  if len(storage_nombres) > 0:
+    print "Los nombres de las unidades son: "+str(storage_nombres)
+
+  storage_indices = obtenerStorageIndices(comunidad, direccionIP)       #util para armar el OID de la consulta SNMP
+  if len(storage_indices) > 0:
+    print "Los indices OID de las unidades son: "+str(storage_indices)
+    creacionBaseMemoria(directorio, storage_indices)
+    
+  proc_arch = open(directorio + "/storages.txt", "w")                   #se guardan en el txt los indices y nombres de los storage
+  for(a,b) in zip(storage_indices, storage_nombres):
+    proc_arch.write(a + "<<-->>" + b + "\n")
+  proc_arch.close()
 
 #Funcion que va introducinedo en la BD de RRDtool los datos adquiridos por peticiones SNMP
 def llenaBaseRRD(nombre, direccionIP, comunidad):  
-  comunidad = comunidad.strip()				#Se quitan los caracteres de linea como \n \t \r de la cadena 
+  comunidad = comunidad.strip()				                    #Se quitan los caracteres de op. de linea como \n \t \r de la cadena 
   dirSinPuntos = direccionIP.replace(".","_")		
   directorio = os.getcwd() + "/" + dirSinPuntos
   i = 0
@@ -139,6 +160,19 @@ def llenaBaseRRD(nombre, direccionIP, comunidad):
 
       # Se agrega la informacion del agente referente a recursos
       adicionInfoRecursosAgente(directorio, identificadores, comunidad, direccionIP)
+
+    # Llenado de la base de storages
+    if os.path.exists(directorio + "/memoria.rrd"): # Tiene la base de recursos
+      # Se obtienen los identificadores que estan en el archivo de procesadores
+      proc_arch = open(directorio + "/storages.txt", "r")
+      lineas = proc_arch.readlines()
+      print "Lineas leidas: "+str(lineas)
+
+      arregloDeIndices=[]
+      for ln in lineas:
+        arregloDeIndices.append(ln.split("<<-->>")[0])
+      # Se agrega la informacion del agente referente a recursos
+      adicionInfoStorageAgente(directorio, arregloDeIndices, comunidad, direccionIP)
 
 
   if ret:
@@ -239,10 +273,13 @@ def graficaRR(nombre, direccionIP):
              "PRINT:salidaLAST:%6.2le LAST")
 
     value = procesarCadenaRetorno(ret5[2][0])
-    enviaCorreoSiEsMayor(value, LIM_TCPC, "TCPconnections por encima de"+str(LIM_TCPC), directorio+"/netPING.png")
+    #enviaCorreoSiEsMayor(value, LIM_TCPC, "TCPconnections por encima de"+str(LIM_TCPC), directorio+"/netPING.png") //CHECAR, URGE
     
     # Graficado de recursos
     graficaRecursosAgente(directorio, tiempo_nuevo)
+
+    # Graficado de recursos
+    graficaStorageAgente(directorio, tiempo_nuevo)
 
     # Tiempo de espera para hacer grafica
     time.sleep(15)

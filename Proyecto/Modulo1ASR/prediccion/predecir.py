@@ -40,9 +40,9 @@ def realizar_prediccion(fecha_inicio, hora_inicio, fecha_termino, hora_termino, 
     print "el dato mas antiguo de "+baseRRD+ "es del momento"+str(rrdtool.first(baseRRD)), "usare ese"
     posix_inicio=rrdtool.first(baseRRD)
 
-  if(posix_termino>rrdtool.last(baseRRD)):
-    print "el dato mas actual de "+baseRRD+ "es del momento"+str(rrdtool.last(baseRRD)), "usare ese"
-    posix_termino=rrdtool.last(baseRRD)
+  #if(posix_termino>rrdtool.last(baseRRD)):
+   # print "el dato mas actual de "+baseRRD+ "es del momento"+str(rrdtool.last(baseRRD)), "usare ese"
+    #posix_termino=rrdtool.last(baseRRD)
   ret = rrdtool.graph("grafica"+ variable + ".png",
                       "--start",
                       str(int(posix_inicio)),
