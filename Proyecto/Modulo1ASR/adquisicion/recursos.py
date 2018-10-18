@@ -10,16 +10,21 @@ import random
 import time
 
 from getSNMP import consultaSNMP
+from notify import enviaAlerta
 
 OID_PROCESSOR_TABLE = '1.3.6.1.2.1.25.3.3.1.2'
 
-OID_DESC_STORAGE_TABLE = '1.3.6.1.2.1.25.2.3.1.3' #con este oid se obtienen los nombres de los recursos tipo storage
-OID_INDEX_STORAGE_TABLE ='1.3.6.1.2.1.25.2.3.1.1' #con este oid se obtienen los indices de los recursos tipo storage
-OID_USED_STORAGE_TABLE = '1.3.6.1.2.1.25.2.3.1.6' #oid para el espacio usado 
-OID_TOTAL_STORAGE_TABLE ='1.3.6.1.2.1.25.2.3.1.5' #oid para el espacio total 
+OID_DESC_STORAGE_TABLE = '1.3.6.1.2.1.25.2.3.1.3' # Con este oid se obtienen los nombres de los recursos tipo storage
+OID_INDEX_STORAGE_TABLE ='1.3.6.1.2.1.25.2.3.1.1' # Con este oid se obtienen los indices de los recursos tipo storage
+OID_USED_STORAGE_TABLE = '1.3.6.1.2.1.25.2.3.1.6' # OID para el espacio usado 
+OID_TOTAL_STORAGE_TABLE ='1.3.6.1.2.1.25.2.3.1.5' # OID para el espacio total 
 
 OID_MEM_SIZE = '1.3.6.1.2.1.25.2.3.1.5'
 OID_MEM_USED = '1.3.6.1.2.1.25.2.3.1.6'
+
+CONTRATO_PROCESADORES = [30, 60, 90]
+CONTRATO_RAM = [50, 70, 90]
+CONTRATO_COLORES = ['#e8eb00', '#e86600', '#c00000']
 
 def creacionBaseRecursos(directorio, num_procs):
   # Se procede a crear la base de datos round-robin
@@ -32,10 +37,6 @@ def creacionBaseRecursos(directorio, num_procs):
     datasources.append(dataStr)
     rraStr = "RRA:AVERAGE:0.5:1:600"
     rra.append(rraStr)
-
-  # Se agrega el datasource de la memoria
-  datasources.append("DS:Memory_Used:GAUGE:600:U:U")
-  rra.append("RRA:AVERAGE:0.5:1:600")
 
   ret = rrdtool.create(directorio + "/recursos.rrd",
                      "--start",'N',
@@ -52,8 +53,7 @@ def creacionBaseMemoria(directorio, indices):    #funcion que crea la base del u
     dataStr = "DS:strg" + ind+ "load:GAUGE:600:U:U" 
     datasources.append(dataStr)
     rraStr = "RRA:AVERAGE:0.5:1:600"
-    rra.append(rraStr)
-    print str(ind)
+    rra.append(rraStr)    
 
   ret = rrdtool.create(directorio + "/memoria.rrd",
                      "--start",'N',
@@ -69,7 +69,7 @@ def obtenerProcesadores(comunidad, ipAddr):
     retorno = subprocess.check_output(snmpWalk, shell=True)
     cargas = retorno.split('\n')
     cargas = cargas[:-1]
-    #print cargas
+
     return cargas
   except subprocess.CalledProcessError, e:
     return []
@@ -83,8 +83,7 @@ def obtenerStorageNames(comunidad, ipAddr):
   try:
     retorno = subprocess.check_output(snmpWalk, shell=True)
     cargas = retorno.split('\n')
-    cargas = cargas[:-1]
-    #print "Cargas de storage: "+str(cargas.split(':')[0])
+    cargas = cargas[:-1]    
     
     for cr in cargas:
       aux=cr.split("STRING:")[-1]
@@ -103,8 +102,7 @@ def obtenerStorageIndices(comunidad, ipAddr):
   try:
     retorno = subprocess.check_output(snmpWalk, shell=True)
     cargas = retorno.split('\n')
-    cargas = cargas[:-1]
-    #print "Cargas de storage: "+str(cargas.split(':')[0])
+    cargas = cargas[:-1]    
     
     for cr in cargas:
       aux=cr.split("INTEGER:")[-1]
@@ -114,46 +112,35 @@ def obtenerStorageIndices(comunidad, ipAddr):
   except subprocess.CalledProcessError, e:
     return []
 
-
-def adicionInfoRecursosAgente(directorio, identificadores, comunidad, ipAddr):
+def adicionInfoProcesadoresAgente(directorio, identificadores, comunidad, ipAddr):
   valores = "N:"
 
   # Parte de informacion de procesadores
   for ide in identificadores: 
-    ide = ide.replace('\n', '')   
-    #print comunidad+"-"+ipAddr+"-"+OID_PROCESSOR_TABLE+"."+ide
+    ide = ide.replace('\n', '')       
     carga_CPU = int(consultaSNMP(comunidad, ipAddr, OID_PROCESSOR_TABLE + "." + ide))
     valores += str(carga_CPU) + ":"
   
   valores = valores[:-1]
-
-  # Parte de informacion de memoria (RAM, en este caso (es por eso que tiene el 1))
-  mem_size = int(consultaSNMP(comunidad, ipAddr, OID_MEM_SIZE + '.' + '1'))
-  mem_used = int(consultaSNMP(comunidad, ipAddr, OID_MEM_USED + '.' + '1'))
-  pct_used = int(float(mem_used) / float(mem_size) * 100)
-
-  valores += ":" + str(pct_used)  
+  
   rrdtool.update(directorio + '/recursos.rrd', valores)
-  # rrdtool.dump('trend1.rrd','trend.xml')
-
 
 def adicionInfoStorageAgente(directorio, indices, comunidad, ipAddr):
   valores = "N:"
 
   # Parte de informacion de procesadores
   for ide in indices: 
-    ide = ide.replace('\n', '')   
-    #print comunidad+"-"+ipAddr+"-"+OID_PROCESSOR_TABLE+"."+ide
+    ide = ide.replace('\n', '')       
     usado = int(consultaSNMP(comunidad, ipAddr, OID_USED_STORAGE_TABLE + "." + ide))
     total = int(consultaSNMP(comunidad, ipAddr, OID_TOTAL_STORAGE_TABLE + "." + ide))
-    if(total==0):
-      total=0.001;
-    percent=int((float(usado)/float(total))*100)
+    
+    if(total == 0):
+      total = 0.001;
+    
+    percent = int((float(usado)/float(total))*100)
     valores += str(percent) + ":"
   
-  valores = valores[:-1]
-  print "Values: "+valores
-  #valores += ":" + str(percent)  
+  valores = valores[:-1]  
   rrdtool.update(directorio + '/memoria.rrd', valores)
   rrdtool.dump(directorio +'/memoria.rrd',directorio +'/memoria.xml')
 
@@ -168,25 +155,24 @@ def graficaRecursosAgente(directorio, tiempo_inicio):
   # Primero los procesadores
   for i in range(num_procs):
     propiedades_recursos.append(generacionPropiedadesProcesadorGrafica(directorio, i, tiempo_inicio))
-
-  # Propiedades para la memoria
-  propiedades_recursos.append(generacionPropiedadesMemoriaGrafica(directorio, tiempo_inicio))
-
+  
   # Se grafican todos los recursos
+  num_proc = 1
   for propiedad in propiedades_recursos:
-    grafica(propiedad)
+    graficaProcesador(propiedad, directorio, num_proc)
+    num_proc += 1
 
 def graficaStorageAgente(directorio, tiempo_inicio):
   # Se lee el archivo, para saber cuantas graficas se haran
   proc_arch = open(directorio + "/storages.txt", "r")
   lineasLeidas = proc_arch.readlines()
-  nombres=[]
-  indices=[]
+  nombres = []
+  indices = []
   for linea in lineasLeidas:
     nombres.append(linea.split("<<-->>")[1])
     indices.append(linea.split("<<-->>")[0])
   
-  numOfStorages=len(lineasLeidas)
+  numOfStorages = len(lineasLeidas)
   # Se generan las propiedades de las graficas
   propiedades_recursos = []  
 
@@ -195,8 +181,10 @@ def graficaStorageAgente(directorio, tiempo_inicio):
     propiedades_recursos.append(generacionPropiedadesStorageGrafica(directorio, tiempo_inicio, nombres[i], indices[i]))
 
   # Se grafican todos los recursos
+  i = 0
   for propiedad in propiedades_recursos:
-    grafica(propiedad)
+    graficaMemoria(propiedad, directorio, nombres[i])
+    i += 1
 
 def generacionPropiedadesProcesadorGrafica(directorio, numProcesador, tiempo_inicio):
   propiedades = []
@@ -205,7 +193,12 @@ def generacionPropiedadesProcesadorGrafica(directorio, numProcesador, tiempo_ini
   # Cadenas relativas a la grafica de la linea
   definicion = "DEF:carga" + str(numProcesador + 1) + "=" + grafica + ":CPU" + str(numProcesador + 1) + "load:AVERAGE"
   color = "AREA:carga" + str(numProcesador + 1) + hex_code_colors() + ":CPU" + str(numProcesador + 1) + " load"
-  
+  baselines = []
+  i = 0
+  for linea in CONTRATO_PROCESADORES:
+    baselines.append("LINE2:" + str(linea) + CONTRATO_COLORES[i])
+    i += 1
+
   # Se llena el arreglo con las propiedades
   propiedades.append(directorio + "/procesador" + str(numProcesador + 1) + ".png")
   propiedades.append("--start")
@@ -218,29 +211,12 @@ def generacionPropiedadesProcesadorGrafica(directorio, numProcesador, tiempo_ini
   propiedades.append('--rigid')
   propiedades.append(definicion)
   propiedades.append(color)
-
-  return propiedades
-
-def generacionPropiedadesMemoriaGrafica(directorio, tiempo_inicio):
-  propiedades = []
-  grafica = directorio + "/recursos.rrd"
-
-  # Cadenas relativas a la grafica de la linea
-  definicion = "DEF:Memory_Used=" + grafica + ":Memory_Used:AVERAGE"
-  color = "AREA:Memory_Used" + hex_code_colors() + ":Memory_Used"
   
-  # Se llena el arreglo con las propiedades
-  propiedades.append(directorio + "/memoria.png")
-  propiedades.append("--start")
-  propiedades.append(tiempo_inicio)  
-  propiedades.append("--vertical-label=Uso de Memoria")  
-  propiedades.append('--vertical-label')
-  propiedades.append("Uso de Memoria (%)")
-  propiedades.append('--lower-limit=0')  
-  propiedades.append('--upper-limit=100')
-  propiedades.append('--rigid')
-  propiedades.append(definicion)
-  propiedades.append(color)
+  for baseline in baselines:
+    propiedades.append(baseline)
+
+  propiedades.append("VDEF:entradaLAST=carga" + str(numProcesador + 1) + ",LAST")
+  propiedades.append("PRINT:entradaLAST:%6.2le")
 
   return propiedades
 
@@ -249,13 +225,15 @@ def generacionPropiedadesStorageGrafica(directorio, tiempo_inicio, nombre, index
   grafica = directorio + "/memoria.rrd"
 
   # Cadenas relativas a la grafica de la linea
-  definicion = "DEF:Memory_Used=" + grafica + ":strg"+index+"load:AVERAGE"
+  definicion = "DEF:Memory_Used=" + grafica + ":strg" + index + "load:AVERAGE"
   color = "AREA:Memory_Used" + hex_code_colors() + ":Memory_Used"
   
   # Se llena el arreglo con las propiedades
-  nombre=nombre.replace("/","_")
-  nombre=nombre.replace("\\","_")
-  propiedades.append(directorio + "/"+nombre+".png")
+  nombre = nombre.replace("/","_")
+  nombre = nombre.replace("\\","_")
+  nombre = nombre.lstrip().rstrip()
+    
+  propiedades.append(directorio + "/" + nombre + ".png")
   propiedades.append("--start")
   propiedades.append(tiempo_inicio)  
   propiedades.append("--vertical-label=Uso de Memoria")  
@@ -267,7 +245,81 @@ def generacionPropiedadesStorageGrafica(directorio, tiempo_inicio, nombre, index
   propiedades.append(definicion)
   propiedades.append(color)
 
+  # Se verifica si es la memoria RAM, ya que entra en el contrato
+  if "Physical" in nombre:    
+    baselines = []
+    i = 0
+    
+    for linea in CONTRATO_RAM:
+      baselines.append("LINE2:" + str(linea) + CONTRATO_COLORES[i])
+      i += 1
+
+    for baseline in baselines:
+      propiedades.append(baseline)
+    
+    propiedades.append("VDEF:entradaLAST=Memory_Used,LAST")
+    propiedades.append("PRINT:entradaLAST:%6.2le")    
+
   return propiedades
+
+def graficaMemoria(propiedad, directorio, nombre):  
+  ret = rrdtool.graph(propiedad)
+
+  if "Physical" in nombre:    
+    ultima_carga = procesarCadenaRetorno(ret[2][0])
+    tipo_linea = comparacionValoresContrato(ultima_carga, CONTRATO_RAM)
+    mensajeCorreo = seleccionMensajeCorreoProcesador(tipo_linea)
+    
+    if mensajeCorreo != "": # Se enviara correo
+      enviaAlerta('Memoria RAM: ' + mensajeCorreo, \
+      directorio + '/Physical memory.png')
+
+def graficaProcesador(propiedad, directorio, num_proc):
+  ret = rrdtool.graph(propiedad)
+  ultima_carga = procesarCadenaRetorno(ret[2][0])
+  tipo_linea = comparacionValoresContrato(ultima_carga, CONTRATO_PROCESADORES)
+  mensajeCorreo = seleccionMensajeCorreoProcesador(tipo_linea)
+
+  if mensajeCorreo != "": # Se enviara correo
+    procesador = 'procesador' + str(num_proc)
+    enviaAlerta(procesador, directorio + '/' + procesador + '.png')
+
+def comparacionValoresContrato(valor, valores_contrato):
+  # Primero se compara con el mayor, para que sea el de mayor peso
+  comparadores = list(reversed(valores_contrato))
+  i = 0
+
+  for comparador in comparadores:    
+    if (valor >= comparador):
+      return i # 0 -> mayor peso, 2 -> menor peso
+    i += 1
+
+  return -1 # no ha pasado ningun limite
+
+def seleccionMensajeCorreoProcesador(tipo):
+  mensajeCorreo = ""
+
+  if tipo != -1: # Se debe de notificar!!
+    if tipo == 0:
+      mensajeCorreo = 'Se ha sobrepasado el limite GO. Actue lo antes posible.'
+    elif tipo == 1:
+      mensajeCorreo = 'Se ha sobrepasado el limite SET. Mantengase al pendiente.'
+    elif tipo == 2:
+      mensajeCorreo = 'Se ha sobrepasado el limite READY.'
+
+  return mensajeCorreo
+
+def procesarCadenaRetorno(cadena):
+  # Primero, se limpia la cadena
+  cadena = cadena.lstrip()
+  valor = cadena.split(" ")
+
+  try:
+    # Se convierte a un float
+    float(valor[0])    
+    return float(valor[0])
+  except ValueError:    
+    return 0
 
 def hex_code_colors():
   a = hex(random.randrange(0,256))
@@ -284,6 +336,3 @@ def hex_code_colors():
       c = "0" + c
   z = a + b + c
   return "#" + z.upper()
-
-def grafica(propiedad):
-  ret = rrdtool.graph(propiedad)

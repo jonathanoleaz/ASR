@@ -3,7 +3,7 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 
 mailsender = "mazetm182@gmail.com"
-mailreceip = "mazetm182@gmail.com"
+mailreceip = "cesar.cruz182@gmail.com"
 mailserver = 'smtp.gmail.com: 587'
 password = 'BATIZ1IM4'
 

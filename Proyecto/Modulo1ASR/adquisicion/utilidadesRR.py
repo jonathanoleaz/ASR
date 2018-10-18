@@ -114,6 +114,7 @@ def llenaBaseRRD(nombre, direccionIP, comunidad):
   directorio = os.getcwd() + "/" + dirSinPuntos
   i = 0
 
+
   while (1):
     i = i + 1
 
@@ -159,7 +160,7 @@ def llenaBaseRRD(nombre, direccionIP, comunidad):
       identificadores = proc_arch.readlines()
 
       # Se agrega la informacion del agente referente a recursos
-      adicionInfoRecursosAgente(directorio, identificadores, comunidad, direccionIP)
+      adicionInfoProcesadoresAgente(directorio, identificadores, comunidad, direccionIP)
 
     # Llenado de la base de storages
     if os.path.exists(directorio + "/memoria.rrd"): # Tiene la base de recursos

@@ -204,6 +204,7 @@ def insertarComponentesEnVentana(componentes):
 
 def seleccionarFechas():
   # Metodo para seleccionar las fechas de la prediccion
+  clearVentana()
   l_inicio = Label(root, text="Seleccione fecha de inicio")
   cal_inicio = Calendar(root, font="Arial 12", year=2018, month=10, day=1)
   l_horaI = Label(root, text="Seleccione la hora")  
