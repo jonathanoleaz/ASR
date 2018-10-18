@@ -13,21 +13,19 @@ from adquisicion.notify import enviaAlerta
 
 ONE_HR_POSIX = 86400 / 24
 ONE_MIN_POSIX = ONE_HR_POSIX / 60
+TIEMPO_EXTRA = 5200
 
 def realizar_prediccion(fecha_inicio, hora_inicio, fecha_termino, hora_termino, agente, baseRRD, variable, limInf, limSup):
-  
-
   dirSinPuntos = agente.replace(".","_")			#Se quitan los puntos de la IP y se ponen _
   directorio = os.getcwd() + "/" + dirSinPuntos		#Se obtiene el directorio en el que deben guardarse las graficas .png
-  baseRRD=directorio+"/"+baseRRD
+  baseRRD = directorio + "/" + baseRRD
 
-  rrdtool.dump(baseRRD,baseRRD+"Test.xml")       #NO borrar, sirve para depurar esta funcion
+  rrdtool.dump(baseRRD,baseRRD + "Test.xml")       #NO borrar, sirve para depurar esta funcion
 
   propiedades = []  
   posix_inicio = calculo_fecha_posix(fecha_inicio, hora_inicio)
   posix_termino = calculo_fecha_posix(fecha_termino, hora_termino)
   
-
   print 'Hr inicial: -> ' + str(posix_inicio)
   print 'Hr termino: -> ' + str(posix_termino)
 
@@ -43,11 +41,12 @@ def realizar_prediccion(fecha_inicio, hora_inicio, fecha_termino, hora_termino, 
   #if(posix_termino>rrdtool.last(baseRRD)):
    # print "el dato mas actual de "+baseRRD+ "es del momento"+str(rrdtool.last(baseRRD)), "usare ese"
     #posix_termino=rrdtool.last(baseRRD)
+  
   ret = rrdtool.graph("grafica"+ variable + ".png",
                       "--start",
                       str(int(posix_inicio)),
                       "--end",
-                      str(int(posix_termino)),
+                      str(int(posix_termino) + TIEMPO_EXTRA),
                       "--vertical-label=" + variable,
                       "--vertical-label="+"Uso de"+variable,
                       "--lower-limit=0",
@@ -76,13 +75,16 @@ def realizar_prediccion(fecha_inicio, hora_inicio, fecha_termino, hora_termino, 
                       "LINE2:avg2#99FF33"
                       )
   print ret
-  momentoSUP=ret[2][0]
-  valorSUP=ret[2][1]
-  momentoINF=ret[2][2]
-  valorINF=ret[2][3]
-  enviaAlerta("Prediccion lim.superior: "+momentoSUP+" Valor:"+valorSUP+
-               "Prediccion lim.inferior: "+momentoINF+" Valor:"+valorINF, "grafica"+ variable + ".png")
-  print momentoSUP+valorSUP+momentoINF+valorINF
+  
+  momentoSUP = ret[2][0]
+  valorSUP = ret[2][1]
+  momentoINF = ret[2][2]
+  valorINF = ret[2][3]
+  
+  # enviaAlerta("Prediccion lim.superior: "+momentoSUP+" Valor:"+valorSUP+
+               #"Prediccion lim.inferior: "+momentoINF+" Valor:"+valorINF, "grafica"+ variable + ".png")
+  
+  print momentoSUP + valorSUP + momentoINF + valorINF
 
 def calculo_fecha_posix(fecha, hora):
   posix_fecha = mktime(fecha.timetuple())
