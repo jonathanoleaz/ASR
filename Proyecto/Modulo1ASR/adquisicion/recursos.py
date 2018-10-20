@@ -23,7 +23,7 @@ OID_MEM_SIZE = '1.3.6.1.2.1.25.2.3.1.5'
 OID_MEM_USED = '1.3.6.1.2.1.25.2.3.1.6'
 
 CONTRATO_PROCESADORES = [30, 60, 90]
-CONTRATO_RAM = [50, 70, 90]
+CONTRATO_RAM = [69, 78, 87]
 CONTRATO_COLORES = ['#e8eb00', '#e86600', '#c00000']
 
 def creacionBaseRecursos(directorio, num_procs):
