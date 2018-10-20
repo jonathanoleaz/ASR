@@ -1,3 +1,10 @@
+'''
+  File name: predecir.py
+  Author: Jonathan Olea
+  Project: Adquisicion de datos
+  Python Version: 2.7
+'''
+
 import threading
 import rrdtool
 import thread

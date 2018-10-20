@@ -1,3 +1,10 @@
+'''
+  File name: notify.py
+  Author: Cesar Cruz
+  Project: Adquisicion de datos
+  Python Version: 2.7
+'''
+
 import smtplib
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart

@@ -1,3 +1,10 @@
+'''
+  File name: predecir.py
+  Author: Jonathan Olea, Cesar Cruz
+  Project: Adquisicion de datos
+  Python Version: 2.7
+'''
+
 import rrdtool
 import time
 import os

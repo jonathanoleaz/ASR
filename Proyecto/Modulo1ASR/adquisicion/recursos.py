@@ -1,6 +1,6 @@
 '''
-  File name: interfazGrafica.py
-  Author: Cesar Cruz
+  File name: recursos.py
+  Author: Cesar Cruz, Jonathan Olea
   Project: Adquisicion de datos
   Python Version: 2.7
 '''
