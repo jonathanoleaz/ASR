@@ -1,0 +1,6 @@
+HORA DE INICIO -> OCT 21 2018 @ 21:49
+Variable: CPU1load
+	Linea 50% -> OCT 21 2018 @ 21:53:30
+	Linea 70% -> OCT 21 2018 @ 21:56:00
+Variable: CPU2load
+	Linea 50% -> OCT 21 2018 @ 21:53:00

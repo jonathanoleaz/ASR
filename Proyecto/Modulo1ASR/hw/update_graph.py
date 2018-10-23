@@ -6,7 +6,7 @@ from notify import enviaAlerta
 
 total_input_traffic = 0
 
-NOMBRE_PNG = "netP.png"
+NOMBRE_PNG = "netX.png"
 BASE_RRD = "netPred.rrd"
 
 VENTANA_CORREO = 1 # En caso que haya muchas aberraciones seguidas, enviara correos a lo mas, cada n minutos
@@ -17,9 +17,9 @@ tiempo_actual = int(time.time())            #sin ventana --start tiempo_actual
 
 timeOfLastSentMail = int(time.time() - (60 * VENTANA_CORREO)); #MUST BE this value for my condicional
 
-OID = '1.3.6.1.2.1.2.2.1.10.3'
-COMUNIDAD = 'public'
-HOST = 'localhost'
+OID = '1.3.6.1.2.1.6.10.0'
+COMUNIDAD = 'pinguinos'
+HOST = '10.100.85.123'
                                                                                   # 3.6.1.2.1.2.2.1.10.10
 while 1:
     total_input_traffic = int(consultaSNMP(COMUNIDAD, HOST, OID))          

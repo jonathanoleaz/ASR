@@ -274,6 +274,7 @@ def generacionPropiedadesStorageGrafica(directorio, tiempo_inicio, nombre, index
 
 def graficaMemoria(propiedad, directorio, nombre, no_spam):  
   ret = rrdtool.graph(propiedad)
+  nombre = nombre.lstrip().rstrip()
 
   if "Physical" in nombre:    
     ultima_carga = procesarCadenaRetorno(ret[2][0])
@@ -282,7 +283,7 @@ def graficaMemoria(propiedad, directorio, nombre, no_spam):
     
     if mensajeCorreo != "" and no_spam == True: # Se enviara correo
       enviaAlerta('Memoria RAM: ' + mensajeCorreo, \
-      directorio + '/"Physical memory".png')
+      directorio + '/' + nombre + '.png')
 
 def graficaProcesador(propiedad, directorio, num_proc, no_spam):
   ret = rrdtool.graph(propiedad)
