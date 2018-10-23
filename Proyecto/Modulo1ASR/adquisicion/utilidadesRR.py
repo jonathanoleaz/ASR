@@ -25,6 +25,9 @@ LIM_TCPC = 1000;
 INPUT_ICMP = '1.3.6.1.2.1.5.1.0'
 OUTPUT_ICMP = '1.3.6.1.2.1.5.14.0'
 
+GRAPH_SLEEP = 15
+NO_SPAM_LIM = 3
+
 def enviaCorreoSiEsMayor(valor, valorLimite, mensaje, rutaArchivo):
 	if valor > valorLimite: # El valor excede lo esperado
 		enviaAlerta(mensaje, rutaArchivo)		
@@ -199,6 +202,17 @@ def graficaRR(nombre, direccionIP):
   dirSinPuntos = direccionIP.replace(".","_")		#Se pasa la direccion IP con puntos a formato con "_"
   directorio = os.getcwd() + "/" + dirSinPuntos		#Se obtiene el directorio en el que deben guardarse las graficas .png
   
+  # Inicializacion de vectores para no spam
+  proc_arch = open(directorio + "/procesadores.txt", "r")
+  num_procs = len(proc_arch.readlines())
+  proc_arch.close()
+
+  no_spam = []
+  contadores = []
+  for i in range(num_procs):
+    no_spam.append(False)
+    contadores.append(NO_SPAM_LIM)
+
   t = 1
   while (1):        
     t = t + 1;
@@ -263,10 +277,7 @@ def graficaRR(nombre, direccionIP):
              "VDEF:salidaLAST=outoctets,LAST",
              "PRINT:salidaLAST:%6.2le LAST")
 
-    value = procesarCadenaRetorno(ret4[2][0])
-    #if pingSalida > 2:
-     # enviaAlerta("PING SALIDA POR ENCIMA DEL LIMITE", directorio+"/netPING.png")
-     # print "Enviare correo!!"
+    value = procesarCadenaRetorno(ret4[2][0])    
     enviaCorreoSiEsMayor(value, LIM_PING, "PING por encima de"+str(LIM_PING), directorio+"/netPING.png")
 
     ret5 = rrdtool.graph(directorio+"/netTCPc.png",
@@ -283,12 +294,27 @@ def graficaRR(nombre, direccionIP):
     value = procesarCadenaRetorno(ret5[2][0])
     #enviaCorreoSiEsMayor(value, LIM_TCPC, "TCPconnections por encima de"+str(LIM_TCPC), directorio+"/netPING.png") //CHECAR, URGE
     
-    # Graficado de recursos
-    graficaRecursosAgente(directorio, tiempo_nuevo)
+    # Manejo de banderas
+    i = 0
+    for contador in contadores:
+      no_spam[i] = (contador == NO_SPAM_LIM)    
+      i += 1
+    print "-> " + str(no_spam)
 
     # Graficado de recursos
-    graficaStorageAgente(directorio, tiempo_nuevo)
+    graficaRecursosAgente(directorio, tiempo_nuevo, num_procs, no_spam)
 
+    # Graficado de recursos
+    graficaStorageAgente(directorio, tiempo_nuevo, no_spam[0])
+
+    # Actualizacion contadores
+    i = 0
+    for contador in contadores:
+      contador = (contador % NO_SPAM_LIM) + 1 
+      contadores[i] = contador
+      i += 1
+
+    print "---> " + str(contadores)
     # Tiempo de espera para hacer grafica
-    time.sleep(15)
+    time.sleep(GRAPH_SLEEP)
 

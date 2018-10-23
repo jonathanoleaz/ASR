@@ -1,0 +1,7 @@
+Hora de inicio: OCT 21 2018 @ 21:54
+	Variable: CPU1load -> 60% -> Error
+	Variable: CPU3load -> 75% -> OCT 21 2018 @ 22:24:45
+
+Hora de inicio: OCT 21 2018 @ 21:56
+	Variable: CPU4load -> 80% -> OCT 21 2018 @ 22:05:45
+	

@@ -148,11 +148,7 @@ def adicionInfoStorageAgente(directorio, indices, comunidad, ipAddr):
   rrdtool.update(directorio + '/memoria.rrd', valores)
   rrdtool.dump(directorio +'/memoria.rrd',directorio +'/memoria.xml')
 
-def graficaRecursosAgente(directorio, tiempo_inicio):
-  # Se lee el archivo, para saber cuantas graficas se haran
-  proc_arch = open(directorio + "/procesadores.txt", "r")
-  num_procs = len(proc_arch.readlines())
-
+def graficaRecursosAgente(directorio, tiempo_inicio, num_procs, no_spam):  
   # Se generan las propiedades de las graficas
   propiedades_recursos = []  
 
@@ -163,10 +159,10 @@ def graficaRecursosAgente(directorio, tiempo_inicio):
   # Se grafican todos los recursos
   num_proc = 1
   for propiedad in propiedades_recursos:
-    graficaProcesador(propiedad, directorio, num_proc)
+    graficaProcesador(propiedad, directorio, num_proc, no_spam[num_proc - 1])
     num_proc += 1
 
-def graficaStorageAgente(directorio, tiempo_inicio):
+def graficaStorageAgente(directorio, tiempo_inicio, no_spam):
   # Se lee el archivo, para saber cuantas graficas se haran
   proc_arch = open(directorio + "/storages.txt", "r")
   lineasLeidas = proc_arch.readlines()
@@ -187,7 +183,7 @@ def graficaStorageAgente(directorio, tiempo_inicio):
   # Se grafican todos los recursos
   i = 0
   for propiedad in propiedades_recursos:
-    graficaMemoria(propiedad, directorio, nombres[i])
+    graficaMemoria(propiedad, directorio, nombres[i], no_spam)
     i += 1
 
 def generacionPropiedadesProcesadorGrafica(directorio, numProcesador, tiempo_inicio):
@@ -272,7 +268,7 @@ def generacionPropiedadesStorageGrafica(directorio, tiempo_inicio, nombre, index
 
   return propiedades
 
-def graficaMemoria(propiedad, directorio, nombre):  
+def graficaMemoria(propiedad, directorio, nombre, no_spam):  
   ret = rrdtool.graph(propiedad)
 
   if "Physical" in nombre:    
@@ -280,17 +276,17 @@ def graficaMemoria(propiedad, directorio, nombre):
     tipo_linea = comparacionValoresContrato(ultima_carga, CONTRATO_RAM)
     mensajeCorreo = seleccionMensajeCorreoProcesador(tipo_linea)
     
-    if mensajeCorreo != "": # Se enviara correo
+    if mensajeCorreo != "" and no_spam == True: # Se enviara correo
       enviaAlerta('Memoria RAM: ' + mensajeCorreo, \
       directorio + '/Physical memory.png')
 
-def graficaProcesador(propiedad, directorio, num_proc):
+def graficaProcesador(propiedad, directorio, num_proc, no_spam):
   ret = rrdtool.graph(propiedad)
   ultima_carga = procesarCadenaRetorno(ret[2][0])
   tipo_linea = comparacionValoresContrato(ultima_carga, CONTRATO_PROCESADORES)
   mensajeCorreo = seleccionMensajeCorreoProcesador(tipo_linea)
 
-  if mensajeCorreo != "": # Se enviara correo
+  if mensajeCorreo != "" and no_spam == True:  # Se enviara correo
     procesador = 'procesador' + str(num_proc)
     enviaAlerta(procesador, directorio + '/' + procesador + '.png')
 
