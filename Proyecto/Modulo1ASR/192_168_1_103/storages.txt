@@ -1,0 +1,4 @@
+1<<-->>"C:\\ Label:  Serial Number dc207c1c"
+2<<-->>"E:\\"
+3<<-->>"Virtual Memory"
+4<<-->>"Physical Memory"

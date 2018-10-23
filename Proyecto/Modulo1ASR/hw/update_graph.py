@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import time
 import rrdtool
 
@@ -17,15 +18,19 @@ tiempo_actual = int(time.time())            #sin ventana --start tiempo_actual
 
 timeOfLastSentMail = int(time.time() - (60 * VENTANA_CORREO)); #MUST BE this value for my condicional
 
-OID = '1.3.6.1.2.1.6.10.0'
+OID = '1.3.6.1.2.1.2.2.1.10.2'
 COMUNIDAD = 'pinguinos'
-HOST = '10.100.85.123'
+HOST = 'localhost'
+
+falla_actual = 0
+falla_anterior = 0
+bandera_falla_iniciada=0
                                                                                   # 3.6.1.2.1.2.2.1.10.10
 while 1:
     total_input_traffic = int(consultaSNMP(COMUNIDAD, HOST, OID))          
 
     valor = "N:" + str(total_input_traffic)
-    print valor
+    #print valor
     ret = rrdtool.update(BASE_RRD, valor)
     rrdtool.dump(BASE_RRD, 'netP.xml')
 
@@ -60,15 +65,36 @@ while 1:
     #print str(ret) + "->" + ret[2][0]
     #print "Ventana: " + str(tiempoNow - timeOfLastSentMail)
     
-    falla = 0
-    if(ret[2][0] != '-nan'):
-      falla = int(ret[2][0])
 
-      if(falla and (tiempoNow-timeOfLastSentMail > 60 * VENTANA_CORREO)): # Si hay falla y el ultimo correo enviado fue hace 5 minutos
-        enviaAlerta("Aberracion (comportamiento anormal) detectado a las: " \
-          + time.asctime(t), NOMBRE_PNG)
+    if(ret[2][0] != '-nan'):
+      falla_actual = int(ret[2][0])
+
+	  #deben enviarse dos correos: uno cuando empieza a detectar aberración y otro cuando deja de detactarla
+    #inicio falla
+    if(falla_anterior==0 and falla_actual==1):    
+      if(tiempoNow-timeOfLastSentMail > 60 * VENTANA_CORREO):      
+        enviaAlerta("Comienzo de aberracion (comportamiento anormal) detectado a las: " \
+                          + time.asctime(t), NOMBRE_PNG)
         timeOfLastSentMail = tiempoNow;
-        print "email sent"
+        bandera_falla_iniciada=1;
+        print "mail start sent"
+
+    #fin falla, no necesita verificarse la ventana de tiempo pero si que se haya enviado un correo de inicio de falla
+    if(falla_anterior==1 and falla_actual==0 and bandera_falla_iniciada==1): 
+      enviaAlerta("Fin de aberracion detectada (comportamiento anormal), a las: " \
+                          + time.asctime(t), NOMBRE_PNG)                        #No es necesario poner marca de tiempo del timeOfLastSentMail
+      timeOfLastSentMail = tiempoNow;      
+      bandera_falla_iniciada=0
+      print "mail end sent"
+
+    falla_anterior=falla_actual
+
+
+#      if(falla and (tiempoNow-timeOfLastSentMail > 60 * VENTANA_CORREO)): # Si hay falla y el ultimo correo enviado fue hace 5 minutos
+ #       enviaAlerta("Aberracion (comportamiento anormal) detectado a las: " \
+  #        + time.asctime(t), NOMBRE_PNG)
+   #     timeOfLastSentMail = tiempoNow;
+    #    print "email sent"
 
     time.sleep(1)
 
