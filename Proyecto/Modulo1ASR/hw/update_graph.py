@@ -9,7 +9,7 @@ total_input_traffic = 0
 NOMBRE_PNG = "netP.png"
 BASE_RRD = "netPred.rrd"
 
-VENTANA_CORREO = 5 # En caso que haya muchas aberraciones seguidas, enviara correos a lo mas, cada n minutos
+VENTANA_CORREO = 1 # En caso que haya muchas aberraciones seguidas, enviara correos a lo mas, cada n minutos
 
 
 init_time = rrdtool.last(BASE_RRD)    #para ventana: --start init_time_100
