@@ -23,6 +23,7 @@ OID_MEM_SIZE = '1.3.6.1.2.1.25.2.3.1.5'
 OID_MEM_USED = '1.3.6.1.2.1.25.2.3.1.6'
 
 CONTRATO_PROCESADORES = [30, 60, 90]
+CONTRATO_HDD = [60, 75, 85]
 CONTRATO_RAM = [69, 78, 87]
 CONTRATO_COLORES = ['#e8eb00', '#e86600', '#c00000']
 
@@ -136,6 +137,9 @@ def adicionInfoStorageAgente(directorio, indices, comunidad, ipAddr):
     
     if(total == 0):
       total = 0.001;
+
+    if(usado == 0):
+      usado = 0.001;
     
     percent = int((float(usado)/float(total))*100)
     valores += str(percent) + ":"
@@ -259,6 +263,12 @@ def generacionPropiedadesStorageGrafica(directorio, tiempo_inicio, nombre, index
     
     propiedades.append("VDEF:entradaLAST=Memory_Used,LAST")
     propiedades.append("PRINT:entradaLAST:%6.2le")    
+  else:       #se trata de un storage
+    baselines = []
+    i = 0
+    for linea in CONTRATO_PROCESADORES:
+      baselines.append("LINE2:" + str(linea) + CONTRATO_COLORES[i])
+      i += 1
 
   return propiedades
 
