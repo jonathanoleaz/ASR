@@ -1,1 +1,1 @@
-localhost 1 161 public
+localhost 1 161 pinguinos

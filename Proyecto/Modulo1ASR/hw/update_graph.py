@@ -57,8 +57,8 @@ while 1:
     t = time.localtime() # Legible para fecha normal
     tiempoNow = int(time.time()) # Es mas facil manejar este para sacar la diferencia de n minutos
     
-    print str(ret) + "->" + ret[2][0]
-    print "Ventana: " + str(tiempoNow - timeOfLastSentMail)
+    #print str(ret) + "->" + ret[2][0]
+    #print "Ventana: " + str(tiempoNow - timeOfLastSentMail)
     
     falla = 0
     if(ret[2][0] != '-nan'):

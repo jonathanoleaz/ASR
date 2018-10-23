@@ -262,9 +262,13 @@ def generacionPropiedadesStorageGrafica(directorio, tiempo_inicio, nombre, index
   else:       #se trata de un storage
     baselines = []
     i = 0
-    for linea in CONTRATO_PROCESADORES:
+    for linea in CONTRATO_HDD:
       baselines.append("LINE2:" + str(linea) + CONTRATO_COLORES[i])
       i += 1
+
+    for baseline in baselines:
+      propiedades.append(baseline)
+     
 
   return propiedades
 
@@ -278,7 +282,7 @@ def graficaMemoria(propiedad, directorio, nombre, no_spam):
     
     if mensajeCorreo != "" and no_spam == True: # Se enviara correo
       enviaAlerta('Memoria RAM: ' + mensajeCorreo, \
-      directorio + '/Physical memory.png')
+      directorio + '/"Physical memory".png')
 
 def graficaProcesador(propiedad, directorio, num_proc, no_spam):
   ret = rrdtool.graph(propiedad)

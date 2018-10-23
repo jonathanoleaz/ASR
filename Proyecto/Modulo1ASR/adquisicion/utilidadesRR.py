@@ -104,12 +104,12 @@ def creaBaseRRD(direccionIP, comunidad):
   #Primero, se obtienen las descripciones de los storage
 
   storage_nombres = obtenerStorageNames(comunidad, direccionIP)
-  if len(storage_nombres) > 0:
-    print "Los nombres de las unidades son: "+str(storage_nombres)
+  #if len(storage_nombres) > 0:
+    #print "Los nombres de las unidades son: "+str(storage_nombres)
 
   storage_indices = obtenerStorageIndices(comunidad, direccionIP)       #util para armar el OID de la consulta SNMP
   if len(storage_indices) > 0:
-    print "Los indices OID de las unidades son: "+str(storage_indices)
+    #print "Los indices OID de las unidades son: "+str(storage_indices)
     creacionBaseMemoria(directorio, storage_indices)
     
   proc_arch = open(directorio + "/storages.txt", "w")                   #se guardan en el txt los indices y nombres de los storage
@@ -177,7 +177,7 @@ def llenaBaseRRD(nombre, direccionIP, comunidad):
       # Se obtienen los identificadores que estan en el archivo de procesadores
       proc_arch = open(directorio + "/storages.txt", "r")
       lineas = proc_arch.readlines()
-      print "Lineas leidas: "+str(lineas)
+      #print "Lineas leidas: "+str(lineas)
 
       arregloDeIndices=[]
       for ln in lineas:
@@ -196,7 +196,7 @@ def graficaRR(nombre, direccionIP):
   tiempo_inicial = tiempo_final - 25920000
   archivo = open("adquisicion/comienzo.txt",'r')
   tiempo_nuevo = archivo.readline().strip()
-  print tiempo_nuevo
+  #print tiempo_nuevo
   archivo.close()
 
   dirSinPuntos = direccionIP.replace(".","_")		#Se pasa la direccion IP con puntos a formato con "_"
@@ -299,7 +299,7 @@ def graficaRR(nombre, direccionIP):
     for contador in contadores:
       no_spam[i] = (contador == NO_SPAM_LIM)    
       i += 1
-    print "-> " + str(no_spam)
+    #print "-> " + str(no_spam)
 
     # Graficado de recursos
     graficaRecursosAgente(directorio, tiempo_nuevo, num_procs, no_spam)
@@ -314,7 +314,7 @@ def graficaRR(nombre, direccionIP):
       contadores[i] = contador
       i += 1
 
-    print "---> " + str(contadores)
+    #print "---> " + str(contadores)
     # Tiempo de espera para hacer grafica
     time.sleep(GRAPH_SLEEP)
 
