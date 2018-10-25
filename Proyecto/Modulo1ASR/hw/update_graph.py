@@ -18,19 +18,19 @@ tiempo_actual = int(time.time())            #sin ventana --start tiempo_actual
 
 timeOfLastSentMail = int(time.time() - (60 * VENTANA_CORREO)); #MUST BE this value for my condicional
 
-OID = '1.3.6.1.2.1.2.2.1.10.2'
-COMUNIDAD = 'pinguinos'
+OID = '1.3.6.1.2.1.2.2.1.10.1'
+COMUNIDAD = 'public'
 HOST = 'localhost'
 
 falla_actual = 0
 falla_anterior = 0
-bandera_falla_iniciada=0
+bandera_falla_iniciada = 0
                                                                                   # 3.6.1.2.1.2.2.1.10.10
 while 1:
     total_input_traffic = int(consultaSNMP(COMUNIDAD, HOST, OID))          
 
     valor = "N:" + str(total_input_traffic)
-    #print valor
+    print valor
     ret = rrdtool.update(BASE_RRD, valor)
     rrdtool.dump(BASE_RRD, 'netP.xml')
 

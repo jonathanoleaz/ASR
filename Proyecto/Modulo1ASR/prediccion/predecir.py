@@ -13,7 +13,7 @@ from adquisicion.notify import enviaAlerta
 
 ONE_HR_POSIX = 86400 / 24
 ONE_MIN_POSIX = ONE_HR_POSIX / 60
-TIEMPO_EXTRA = 5200
+TIEMPO_EXTRA = 900
 
 def realizar_prediccion(fecha_inicio, hora_inicio, fecha_termino, hora_termino, agente, baseRRD, variable, limInf, limSup):
   dirSinPuntos = agente.replace(".","_")			# Se quitan los puntos de la IP y se ponen _
