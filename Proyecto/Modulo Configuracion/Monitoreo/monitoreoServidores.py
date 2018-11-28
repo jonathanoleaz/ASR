@@ -8,14 +8,14 @@ def monitoreo(tipo_servidor):
 	if tipo_servidor == 0: # Servidor SSH				
 		return "Soy el servidor SSH"
 	elif tipo_servidor == 1: # Servidor FTP	
-		tiempo_respuesta = obtener_tiempo_de_respuesta_ftp('localhost', 'servidores', '12345678')
+		tiempo_respuesta = obtener_tiempo_de_respuesta_ftp('10.100.76.217', 'servidores', '12345678')
 		return tiempo_respuesta
 	elif tipo_servidor == 2: # Servidor CUPS		
 		return "Soy el servidor CUPS"
 	elif tipo_servidor == 3: # Servidor SMTP		
 		return "Soy el servidor SMTP"
 	else:
-		tiempo_respuesta = obtener_tiempo_de_respuesta_http('localhost:9999')		
+		tiempo_respuesta = obtener_tiempo_de_respuesta_http('10.100.76.217:9999')		
 		return tiempo_respuesta
 
 def solicitudes_concurrentes(tipos):
