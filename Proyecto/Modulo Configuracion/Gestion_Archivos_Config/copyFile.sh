@@ -27,7 +27,7 @@ echo exit
 
 #telnet ${ip_dir} <<!
 #jonathanoleaz 
-#Samsung4660 
+#hola2323 
 #echo ${ip_dir}
 #cp ${dir_original} ${dir_destino} 
 #exit
