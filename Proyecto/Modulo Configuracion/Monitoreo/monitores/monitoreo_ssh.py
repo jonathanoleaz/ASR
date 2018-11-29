@@ -12,8 +12,7 @@ def obtener_conexiones_actuales(ip, user, password):
     port=PUERTO,
     missing_host_key=spur.ssh.MissingHostKey.accept)
   conexiones = shell_remoto.run(["who"]).output
-  conexiones = conexiones.split("\n")[1:-1]
-  print "conexiones", conexiones
+  conexiones = conexiones.split("\n")[1:-1]  
   
   return conexiones
 
