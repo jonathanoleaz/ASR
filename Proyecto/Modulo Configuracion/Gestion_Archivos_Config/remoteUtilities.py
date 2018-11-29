@@ -10,13 +10,13 @@ from ftplib import FTP
 import os.path
 import subprocess
 
-dir_ip="192.168.2.1"
-local_file="Config"
-remote_file="startup-config"
+#dir_ip="192.168.2.1"
+#local_file="Config"
+#remote_file="startup-config"
 
-remote_user="rcp"
-remote_password="rcp"
-directorio="/"
+#remote_user="rcp"
+#remote_password="rcp"
+#directorio="/"
 
 url_orig="startup-config"; #url donde se recibe el archivo
 url_dest="tftpboot/startup-config"; #url donde se dejara el archivo
@@ -68,6 +68,7 @@ def getFile2(ip, rem_file, loc_file, remote_user, remote_password, directorio_re
         file=open(ipSinPuntos+'/'+marcaDeFecha+loc_file, 'wb')
         ftp.retrbinary('RETR '+rem_file, file.write)
         ftp.quit()
+        print 'end'
         return 1
     except Exception,e:
         print e
@@ -77,13 +78,14 @@ def getFile2(ip, rem_file, loc_file, remote_user, remote_password, directorio_re
 def putFile2(ip, rem_file, loc_file, remote_user, remote_password, directorio_rem):	#envia un archivo del directorio tftpboot con ftpLib
     try: 
         ipSinPuntos = ip.replace(".", "_")      #para organizar los archivos        
-
+        print ip
         ftp=FTP(ip)
         ftp.login(remote_user, remote_password)
         ftp.cwd(directorio_rem)
         file=open(ipSinPuntos+'/'+loc_file, 'rb')
         ftp.storbinary('STOR '+rem_file, file)
         ftp.quit()
+        print 'end'
         return 1
     except Exception,e:
         print e
@@ -92,8 +94,8 @@ def putFile2(ip, rem_file, loc_file, remote_user, remote_password, directorio_re
 
 #copyFile(dir_ip, url_orig, url_dest, remote_user, remote_password);
 
-putFile2(dir_ip, remote_file, local_file, remote_user, remote_password, directorio);
-print("sig comando");
+#putFile2("192.168.1.100", remote_file, local_file, "jonathan", "Samsung4660", directorio);
+#print("sig comando");
 #copyFile(dir_ip, url_dest, url_orig, remote_user, remote_password);
 
 
