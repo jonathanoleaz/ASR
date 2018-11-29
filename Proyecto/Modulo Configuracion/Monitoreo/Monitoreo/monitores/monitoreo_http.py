@@ -1,12 +1,12 @@
 import requests
 import pyshark
+
 from monitoreo_ftp import get_file
 
 HTTP_PCAP = "archivo.pcap"
 
 def obtener_tiempo_de_respuesta_http(ip):
-  cadena_request = 'http://' + ip + '/' # Cadena para realizar el GET
-  # return "0"
+  cadena_request = 'http://' + ip + '/' # Cadena para realizar el GET  
   response = requests.get(cadena_request) # Se realiza el GET    
 
   return str(response.elapsed.total_seconds()) # Se retorna el tiempo

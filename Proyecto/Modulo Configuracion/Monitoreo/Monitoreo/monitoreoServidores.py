@@ -2,7 +2,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 from monitores.monitoreo_http import obtener_bytes_recibidos_http, obtener_tiempo_de_respuesta_http
 from monitores.monitoreo_ftp import conectar_ftp, obtener_tiempo_de_respuesta_ftp
-from monitores.monitoreo_ssh import obtener_conexiones_actuales, obtener_tiempo_conexion
+from monitores.monitoreo_ssh import obtener_conexiones_actuales_ssh, obtener_tiempo_conexion_ssh, obtener_actividad_bytes_ssh
 
 IP_SSH = "192.168.0.8"
 U_SSH = "servidores"
@@ -23,9 +23,13 @@ def monitoreo(tipo_servidor):
     return http_monitoreo()
 
 def ssh_monitoreo():
-  conexiones = obtener_conexiones_actuales(IP_SSH, U_SSH, P_SSH) # Se obtienen las conexiones actuales
-  tiempos = obtener_tiempo_conexion(conexiones) # Se obtiene el tiempo de las conexiones previas
-  respuesta = { "num_conexiones": len(conexiones), "tiempos_conexion": tiempos }
+  conexiones = obtener_conexiones_actuales_ssh(IP_SSH, U_SSH, P_SSH) # Se obtienen las conexiones actuales
+  tiempos = obtener_tiempo_conexion_ssh(conexiones) # Se obtiene el tiempo de las conexiones previas
+  cliente_ftp = conectar_ftp(IP_SSH, U_SSH, P_SSH) # Conexion con cliente FTP  
+  bytes_enviados, bytes_recibidos = obtener_actividad_bytes_ssh(cliente_ftp, IP_SSH)
+
+  respuesta = { "num_conexiones": len(conexiones),\
+   "tiempos_conexion": tiempos, "bytes_enviados": bytes_enviados, "bytes_recibidos": bytes_recibidos  }
 
   return respuesta
 
@@ -35,16 +39,11 @@ def ftp_monitoreo():
   
   return tiempo_respuesta
 
-def http_monitoreo():
-  print "TR-A"
+def http_monitoreo():  
   tiempo_respuesta = obtener_tiempo_de_respuesta_http(IP_HTTP) # Se obtiene tiempo de respuesta
-  print "TR-D"
-  print "CF-A"
-  cliente_ftp = conectar_ftp(IP_SSH, U_SSH, P_SSH) # Conexion con cliente FTP
-  print "CF-D"
-  print "BR-A"
+  cliente_ftp = conectar_ftp(IP_SSH, U_SSH, P_SSH) # Conexion con cliente FTP  
   bytes_recibidos = obtener_bytes_recibidos_http(cliente_ftp, IP_HTTP) # Se obtiene archivo pcap
-  print "BR-D"
+  
   respuesta = { "tiempo_respuesta": tiempo_respuesta, "bytes_recibidos": bytes_recibidos }
 
   return respuesta
@@ -58,4 +57,26 @@ def solicitudes_concurrentes(tipos):
 
 tipos_servidor = [0, 1, 2, 3, 4] # Lista para diferenciar el servidor
 respuesta = solicitudes_concurrentes(tipos_servidor) # Se realizan las peticiones concurrentemente
-print "Respuesta", respuesta
+
+ssh_r, ftp_r, cups_r, smtp_r, http_r = respuesta
+print ".:: Servidor SSH ::."
+print "\tConexiones activas:", ssh_r['num_conexiones']
+print "\tTiempo de conexion:", ssh_r['tiempos_conexion']
+print "\tBytes enviados:", ssh_r['bytes_enviados'], " bytes"
+print "\tBytes recibidos:", ssh_r['bytes_recibidos'], " bytes"
+print "\n"
+
+print ".:: Servidor FTP ::."
+print "\tTiempo de respuesta:", ftp_r, "segundos con archivo de 2MB"
+print "\n"
+
+print ".:: Servidor CUPS ::."
+print "\n"
+
+print ".:: Servidor SMTP ::."
+print "\n"
+
+print ".:: Servidor HTTP ::."
+print "\tTiempo de respuesta:", http_r['tiempo_respuesta'], "segundos"
+print "\tBytes recibidos:", http_r['bytes_recibidos'], "bytes"
+print "\tVelocidad de descarga:"
