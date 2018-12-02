@@ -5,11 +5,15 @@ from monitores.monitoreo_ftp import conectar_ftp, obtener_tiempo_de_respuesta_ft
 from monitores.monitoreo_ssh import conectar_ssh, obtener_conexiones_actuales_ssh, obtener_tiempo_conexion_ssh, obtener_actividad_bytes_ssh
 from monitores.monitoreo_cups import obtener_estado_impresoras
 
-IP_SSH = "192.168.0.8"
+from monitores.monitoreo_smtp import *
+from monitores.monitoreo_imap import *
+
+IP_SMTP_IMAP="192.168.1.142"  #IP del servidor de correo electronico
+IP_SSH = "192.168.1.143"
 U_SSH = "servidores"
 P_SSH = "12345678"
 
-IP_HTTP = "192.168.0.8:8000"
+IP_HTTP = "192.168.1.143:8000"
 
 def monitoreo(tipo_servidor):  
   if tipo_servidor == 0: # Servidor SSH       
@@ -19,7 +23,7 @@ def monitoreo(tipo_servidor):
   elif tipo_servidor == 2: # Servidor CUPS
     return cups_monitoreo()        
   elif tipo_servidor == 3: # Servidor SMTP    
-    return "Soy el servidor SMTP"
+    return correo_monitoreo()
   else:      
     return http_monitoreo()
 
@@ -44,8 +48,8 @@ def http_monitoreo():
   tiempo_respuesta = obtener_tiempo_de_respuesta_http(IP_HTTP) # Se obtiene tiempo de respuesta
   cliente_ftp = conectar_ftp(IP_SSH, U_SSH, P_SSH) # Conexion con cliente FTP  
   bytes_recibidos = obtener_bytes_recibidos_http(cliente_ftp, IP_HTTP) # Se obtiene archivo pcap
-  ancho_de_banda = calcula_ancho_de_banda(IP_SSH)
-  
+  #ancho_de_banda = calcula_ancho_de_banda(IP_SSH)
+  ancho_de_banda = 1
   respuesta = { "tiempo_respuesta": tiempo_respuesta, "bytes_recibidos": bytes_recibidos, "ancho_de_banda": ancho_de_banda }
 
   return respuesta
@@ -55,12 +59,20 @@ def cups_monitoreo():
   
   return obtener_estado_impresoras(ssh_remoto, IP_SSH)
 
-def solicitudes_concurrentes(tipos):
+def solicitudes_concurrentes(tipos):   
   pool = ThreadPool(len(tipos)) # Se crea un pool de conexiones
   respuestas = pool.map(monitoreo, tipos) # Se ejecuta la funcion monitoreo
   pool.close() # Se cierra el pool de conexiones
   
   return respuestas
+
+def correo_monitoreo():
+  tiempo_smtp = obtener_tiempo_de_respuesta_smtp(IP_SMTP_IMAP)
+  tiempo_imap = obtener_tiempo_de_respuesta_imap(IP_SMTP_IMAP)
+  #dl = borrar_correo_prueba(IP_SMTP_IMAP)
+  respuesta= {"SMTP" : tiempo_smtp, "IMAP" : tiempo_imap}
+  return respuesta
+
 
 tipos_servidor = [0, 1, 2, 3, 4] # Lista para diferenciar el servidor
 respuesta = solicitudes_concurrentes(tipos_servidor) # Se realizan las peticiones concurrentemente
@@ -83,7 +95,8 @@ for impresora in cups_r:
   print "\t\tNombre:", impresora["nombre"], "--> Estado:", impresora["estado"]
 print "\n"
 
-print ".:: Servidor SMTP ::."
+print ".:: Servicio de correo ::."
+print "\t Tiempos de respuesta: \n SMTP: ",smtp_r["SMTP"], "secs", "IMAP: ",smtp_r["IMAP"], "secs"
 print "\n"
 
 print ".:: Servidor HTTP ::."
