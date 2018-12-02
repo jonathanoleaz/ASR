@@ -9,12 +9,17 @@ PUERTO = 2222
 FMT = '%H:%M'
 SSH_PCAP = "ssh.pcap"
 
-def obtener_conexiones_actuales_ssh(ip, user, password):
+def conectar_ssh(ip, user, password):
   shell_remoto = spur.SshShell(hostname=ip, 
     username=user, 
     password=password, 
     port=PUERTO,
     missing_host_key=spur.ssh.MissingHostKey.accept)
+
+  return shell_remoto
+
+def obtener_conexiones_actuales_ssh(ip, user, password):
+  shell_remoto = conectar_ssh(ip, user, password)
   conexiones = shell_remoto.run(["who"]).output
   conexiones = conexiones.split("\n")[1:-1]  
   

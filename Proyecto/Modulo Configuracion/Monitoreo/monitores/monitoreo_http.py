@@ -1,9 +1,16 @@
 import requests
 import pyshark
+import time
 
 from monitoreo_ftp import get_file
+from getSNMP import consultaSNMP
 
-HTTP_PCAP = "archivo.pcap"
+HTTP_PCAP = "http.pcap"
+OID_INOCTETS = "1.3.6.1.2.1.2.2.1.10.2"
+OID_OUTOCTETS = "1.3.6.1.2.1.2.2.1.16.2"
+OID_SPEED = "1.3.6.1.2.1.2.2.1.5.2"
+COMUNIDAD = "public"
+DELTA = 2.0
 
 def obtener_tiempo_de_respuesta_http(ip):
   cadena_request = 'http://' + ip + '/' # Cadena para realizar el GET  
@@ -27,3 +34,18 @@ def obtener_total_recibido(cap, http_ip):
     print e
 
   return total
+
+def calcula_ancho_de_banda(ip):
+  in1 = consultaSNMP(COMUNIDAD, ip, OID_INOCTETS)
+  out1 = consultaSNMP(COMUNIDAD, ip, OID_OUTOCTETS)
+  vel1 = consultaSNMP(COMUNIDAD, ip, OID_SPEED)  
+  time.sleep(DELTA)
+  in2 = consultaSNMP(COMUNIDAD, ip, OID_INOCTETS)
+  out2 = consultaSNMP(COMUNIDAD, ip, OID_OUTOCTETS)
+  vel2 = consultaSNMP(COMUNIDAD, ip, OID_SPEED)
+
+  delta_in = int(in2) - int(in1)
+  delta_out = int(out2) - int(out1)  
+  ancho_de_banda = ((delta_in + delta_out) * 800.0) / (DELTA * int(vel2))  
+
+  return ancho_de_banda

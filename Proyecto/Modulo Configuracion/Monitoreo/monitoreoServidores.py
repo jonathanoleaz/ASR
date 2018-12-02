@@ -1,8 +1,9 @@
 from multiprocessing.dummy import Pool as ThreadPool
 
-from monitores.monitoreo_http import obtener_bytes_recibidos_http, obtener_tiempo_de_respuesta_http
+from monitores.monitoreo_http import calcula_ancho_de_banda, obtener_bytes_recibidos_http, obtener_tiempo_de_respuesta_http
 from monitores.monitoreo_ftp import conectar_ftp, obtener_tiempo_de_respuesta_ftp
-from monitores.monitoreo_ssh import obtener_conexiones_actuales_ssh, obtener_tiempo_conexion_ssh, obtener_actividad_bytes_ssh
+from monitores.monitoreo_ssh import conectar_ssh, obtener_conexiones_actuales_ssh, obtener_tiempo_conexion_ssh, obtener_actividad_bytes_ssh
+from monitores.monitoreo_cups import obtener_estado_impresoras
 
 IP_SSH = "192.168.0.8"
 U_SSH = "servidores"
@@ -15,8 +16,8 @@ def monitoreo(tipo_servidor):
     return ssh_monitoreo()
   elif tipo_servidor == 1: # Servidor FTP    
     return ftp_monitoreo()
-  elif tipo_servidor == 2: # Servidor CUPS    
-    return "Soy el servidor CUPS"
+  elif tipo_servidor == 2: # Servidor CUPS
+    return cups_monitoreo()        
   elif tipo_servidor == 3: # Servidor SMTP    
     return "Soy el servidor SMTP"
   else:      
@@ -43,10 +44,16 @@ def http_monitoreo():
   tiempo_respuesta = obtener_tiempo_de_respuesta_http(IP_HTTP) # Se obtiene tiempo de respuesta
   cliente_ftp = conectar_ftp(IP_SSH, U_SSH, P_SSH) # Conexion con cliente FTP  
   bytes_recibidos = obtener_bytes_recibidos_http(cliente_ftp, IP_HTTP) # Se obtiene archivo pcap
+  ancho_de_banda = calcula_ancho_de_banda(IP_SSH)
   
-  respuesta = { "tiempo_respuesta": tiempo_respuesta, "bytes_recibidos": bytes_recibidos }
+  respuesta = { "tiempo_respuesta": tiempo_respuesta, "bytes_recibidos": bytes_recibidos, "ancho_de_banda": ancho_de_banda }
 
   return respuesta
+
+def cups_monitoreo():
+  ssh_remoto = conectar_ssh(IP_SSH, U_SSH, P_SSH)
+  
+  return obtener_estado_impresoras(ssh_remoto, IP_SSH)
 
 def solicitudes_concurrentes(tipos):
   pool = ThreadPool(len(tipos)) # Se crea un pool de conexiones
@@ -67,16 +74,19 @@ print "\tBytes recibidos:", ssh_r['bytes_recibidos'], " bytes"
 print "\n"
 
 print ".:: Servidor FTP ::."
-print "\tTiempo de respuesta:", ftp_r, "segundos con archivo de 2MB"
+print "\tTiempo de respuesta:", round(float(ftp_r), 6), "segundos con archivo de 2MB"
 print "\n"
 
 print ".:: Servidor CUPS ::."
+print "\tNumero de impresoras: ", len(cups_r)
+for impresora in cups_r:
+  print "\t\tNombre:", impresora["nombre"], "--> Estado:", impresora["estado"]
 print "\n"
 
 print ".:: Servidor SMTP ::."
 print "\n"
 
 print ".:: Servidor HTTP ::."
-print "\tTiempo de respuesta:", http_r['tiempo_respuesta'], "segundos"
+print "\tTiempo de respuesta:", round(float(http_r['tiempo_respuesta']), 6), "segundos"
 print "\tBytes recibidos:", http_r['bytes_recibidos'], "bytes"
-print "\tVelocidad de descarga:"
+print "\tVelocidad de descarga:", round(http_r['ancho_de_banda'], 3), "Mbps"
