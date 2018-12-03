@@ -8,21 +8,22 @@ from monitores.monitoreo_cups import obtener_estado_impresoras
 from monitores.monitoreo_smtp import *
 from monitores.monitoreo_imap import *
 
-IP_SMTP_IMAP="192.168.1.142"  #IP del servidor de correo electronico
-IP_SSH = "192.168.1.143"
+IP_SMTP_IMAP="10.10.0.3"  #IP del servidor de correo electronico
+IP_SSH = "10.10.0.2"
 U_SSH = "servidores"
 P_SSH = "12345678"
 
-IP_HTTP = "192.168.1.143:8000"
+IP_HTTP = "10.10.0.2:8000"
 
 def monitoreo(tipo_servidor):  
-  if tipo_servidor == 0: # Servidor SSH       
+  if tipo_servidor == 0: # Servidor SSH          
     return ssh_monitoreo()
   elif tipo_servidor == 1: # Servidor FTP    
     return ftp_monitoreo()
   elif tipo_servidor == 2: # Servidor CUPS
     return cups_monitoreo()        
   elif tipo_servidor == 3: # Servidor SMTP    
+    #return None
     return correo_monitoreo()
   else:      
     return http_monitoreo()
@@ -96,7 +97,7 @@ for impresora in cups_r:
 print "\n"
 
 print ".:: Servicio de correo ::."
-print "\t Tiempos de respuesta: \n SMTP: ",smtp_r["SMTP"], "secs", "IMAP: ",smtp_r["IMAP"], "secs"
+print "\t Tiempos de respuesta: \n\t\t SMTP: ",smtp_r["SMTP"], "secs", "IMAP: ",smtp_r["IMAP"], "secs"
 print "\n"
 
 print ".:: Servidor HTTP ::."

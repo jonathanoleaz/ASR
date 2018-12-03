@@ -5,7 +5,7 @@ import pyshark
 
 from monitoreo_ftp import get_file
 
-PUERTO = 22
+PUERTO = 2222
 FMT = '%H:%M'
 SSH_PCAP = "ssh.pcap"
 
