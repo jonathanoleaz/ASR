@@ -18,6 +18,12 @@ def obtener_tiempo_de_respuesta_http(ip):
 
   return str(response.elapsed.total_seconds()) # Se retorna el tiempo
 
+def obtener_tiempo_de_respuesta_http_post(ip):
+  cadena_request = 'http://' + ip + '/' # Cadena para realizar el GET
+  response = requests.post(cadena_request, data={'algo': 'algo'})
+
+  return str(response.elapsed.total_seconds()), len(response.text), response.status_code
+
 def obtener_bytes_recibidos_http(cliente_ftp, http_ip):  
   get_file(cliente_ftp, HTTP_PCAP) # Se obtiene el archivo  
   cap = pyshark.FileCapture(HTTP_PCAP, only_summaries=True, keep_packets="True", display_filter="http")

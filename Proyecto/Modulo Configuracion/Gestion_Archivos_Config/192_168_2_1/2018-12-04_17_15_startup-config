@@ -1,0 +1,61 @@
+hostname R1
+!
+service telnet
+service http encrypted password LCVMLFHQ$e1b22ac1a6f735417f3fb0ed39bbd68d
+!
+administrator rcp encrypted password JQDGYLVE$7QQgOyAm9urwKSqmRUjvN1
+!
+!
+ip route 192.168.2.0/24  192.168.2.2
+!
+!
+!
+router rip
+  network 192.168.1.0/24
+  redistribute connected
+!
+router ospf
+  router-id 192.168.3.1
+  network 192.168.3.0/24 area 0
+  redistribute connected   
+!
+interface loopback lo
+  ip address 127.0.0.1/8
+  ip mtu 16436
+!
+interface ethernet eth0
+  ip address 17.10.18.1/24
+  ip mtu 1500
+  no shutdown
+!
+interface ethernet eth1
+  ip address 192.168.2.1/24
+  ip mtu 1500
+  no shutdown
+!
+interface ethernet eth2
+  ip address 192.168.1.1/24
+  ip mtu 1500
+  no shutdown
+!
+interface ethernet eth3
+  ip address 192.168.3.1/24
+  ip mtu 1500
+  no shutdown
+!
+interface ethernet eth4
+  ip mtu 1500
+  shutdown
+!
+interface ethernet eth5
+  ip mtu 1500
+  shutdown
+!
+interface ethernet eth6
+  ip mtu 1500
+  shutdown
+!
+interface ethernet eth7
+  ip mtu 1500
+  shutdown
+!

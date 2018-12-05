@@ -1,6 +1,6 @@
 from multiprocessing.dummy import Pool as ThreadPool
 
-from monitores.monitoreo_http import calcula_ancho_de_banda, obtener_bytes_recibidos_http, obtener_tiempo_de_respuesta_http
+from monitores.monitoreo_http import calcula_ancho_de_banda, obtener_bytes_recibidos_http, obtener_tiempo_de_respuesta_http, obtener_tiempo_de_respuesta_http_post
 from monitores.monitoreo_ftp import conectar_ftp, obtener_tiempo_de_respuesta_ftp
 from monitores.monitoreo_ssh import conectar_ssh, obtener_conexiones_actuales_ssh, obtener_tiempo_conexion_ssh, obtener_actividad_bytes_ssh
 from monitores.monitoreo_cups import obtener_estado_impresoras
@@ -9,11 +9,11 @@ from monitores.monitoreo_smtp import *
 from monitores.monitoreo_imap import *
 
 IP_SMTP_IMAP="10.10.0.3"  #IP del servidor de correo electronico
-IP_SSH = "10.10.0.2"
+IP_SSH = "192.168.0.8"
 U_SSH = "servidores"
 P_SSH = "12345678"
 
-IP_HTTP = "10.10.0.2:8000"
+IP_HTTP = "192.168.0.8:8000"
 
 def monitoreo(tipo_servidor):  
   if tipo_servidor == 0: # Servidor SSH          
@@ -23,8 +23,8 @@ def monitoreo(tipo_servidor):
   elif tipo_servidor == 2: # Servidor CUPS
     return cups_monitoreo()        
   elif tipo_servidor == 3: # Servidor SMTP    
-    #return None
-    return correo_monitoreo()
+    return None
+    # return correo_monitoreo()
   else:      
     return http_monitoreo()
 
@@ -46,12 +46,20 @@ def ftp_monitoreo():
   return tiempo_respuesta
 
 def http_monitoreo():  
-  tiempo_respuesta = obtener_tiempo_de_respuesta_http(IP_HTTP) # Se obtiene tiempo de respuesta
+  # tiempo_respuesta = obtener_tiempo_de_respuesta_http(IP_HTTP) # Se obtiene tiempo de respuesta
+  tiempo_respuesta, rec, code = obtener_tiempo_de_respuesta_http_post(IP_HTTP) # Se obtiene tiempo de respuesta
   cliente_ftp = conectar_ftp(IP_SSH, U_SSH, P_SSH) # Conexion con cliente FTP  
   bytes_recibidos = obtener_bytes_recibidos_http(cliente_ftp, IP_HTTP) # Se obtiene archivo pcap
-  #ancho_de_banda = calcula_ancho_de_banda(IP_SSH)
-  ancho_de_banda = 1
-  respuesta = { "tiempo_respuesta": tiempo_respuesta, "bytes_recibidos": bytes_recibidos, "ancho_de_banda": ancho_de_banda }
+  ancho_de_banda = calcula_ancho_de_banda(IP_SSH)
+  
+  #respuesta = { "tiempo_respuesta": tiempo_respuesta,
+  # "bytes_recibidos": bytes_recibidos,
+  #  "ancho_de_banda": ancho_de_banda }
+
+  respuesta = { "tiempo_respuesta": tiempo_respuesta,
+   "bytes_recibidos": bytes_recibidos,
+    "ancho_de_banda": ancho_de_banda,
+    "recibidos": rec, "codigo": code }
 
   return respuesta
 
@@ -97,10 +105,14 @@ for impresora in cups_r:
 print "\n"
 
 print ".:: Servicio de correo ::."
-print "\t Tiempos de respuesta: \n\t\t SMTP: ",smtp_r["SMTP"], "secs", "IMAP: ",smtp_r["IMAP"], "secs"
+# print "\t Tiempos de respuesta: \n\t\t SMTP: ",smtp_r["SMTP"], "secs", "IMAP: ",smtp_r["IMAP"], "secs"
 print "\n"
 
 print ".:: Servidor HTTP ::."
 print "\tTiempo de respuesta:", round(float(http_r['tiempo_respuesta']), 6), "segundos"
 print "\tBytes recibidos:", http_r['bytes_recibidos'], "bytes"
-print "\tVelocidad de descarga:", round(http_r['ancho_de_banda'], 3), "Mbps"
+print "\tRecibidos en respuesta:", http_r['recibidos'], "bytes"
+print "\tCodigo:", http_r['codigo']
+vt = float(http_r['recibidos']) / float(http_r['tiempo_respuesta'])
+print "\tVelocidad de Transmision", round(vt, 4), " bytes / s"
+print "\tVelocidad de descarga del servidor:", round(http_r['ancho_de_banda'], 3), "Mbps"
