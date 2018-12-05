@@ -13,7 +13,7 @@ def obtener_tiempo_de_respuesta_smtp(ip):
 	msg['To'] = TO
 	msg['Subject'] = "Testing response time"
 
-	body = "This is a simple email to test the response time of the SMTP server, please ignore. --00--"
+	body = "César Cruz Arredondo. Jonathan Olea Zuñiga --00--"
 	msg.attach(MIMEText(body, 'plain'))
 
 	server = smtplib.SMTP(ip, 25)

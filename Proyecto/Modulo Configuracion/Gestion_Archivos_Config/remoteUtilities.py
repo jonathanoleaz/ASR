@@ -6,6 +6,7 @@
 '''
 import datetime
 
+from multiprocessing.dummy import Pool as ThreadPool
 from ftplib import FTP
 import os.path
 import subprocess
@@ -98,4 +99,37 @@ def putFile2(ip, rem_file, loc_file, remote_user, remote_password, directorio_re
 #print("sig comando");
 #copyFile(dir_ip, url_dest, url_orig, remote_user, remote_password);
 
+#listaDeListas=[["192.168.1.100", "rem_file", "loc_file", "rcp", "rcp", "/"], ["192.168.1.100", "rem_file", "loc_file", "rcp", "rcp", "/"]]
+def getFileSeveralHosts(argumentos): #recibe un archivo del directorio tftpboot con ftpLib
+    try: 
+        ip, rem_file, loc_file, remote_user, remote_password, directorio_rem=argumentos
+        now = datetime.datetime.now()
+        marcaDeFecha=now.strftime("%Y-%m-%d_%H_%M_")
+
+        ipSinPuntos = ip.replace(".", "_")   
+
+        if not(os.path.exists(ipSinPuntos)):
+            os.mkdir(ipSinPuntos)
+
+        ftp=FTP(ip)
+        ftp.login(remote_user, remote_password)
+        ftp.cwd(directorio_rem)
+        file=open(ipSinPuntos+'/'+marcaDeFecha+loc_file, 'wb')
+        ftp.retrbinary('RETR '+rem_file, file.write)
+        ftp.quit()
+        print 'end'
+        return 1
+    except Exception,e:
+        print e
+        return 0
+
+def get_concurrentes(listaDeListas):   
+    pool = ThreadPool(len(listaDeListas)) # Se crea un pool de conexiones
+    pool.map(getFileSeveralHosts, listaDeListas) # Se ejecuta la funcion monitoreo
+    pool.close() # Se cierra el pool de conexiones
+
+if __name__=='__main__': 
+    print '2222'
+    listaDeListas=[["10.10.10.10", "rem_file", "loc_file", "rcp", "rcp", "/"], ["10.10.10.10", "rem_file", "loc_file", "rcp", "rcp", "/"]]
+    get_concurrentes(listaDeListas)
 
