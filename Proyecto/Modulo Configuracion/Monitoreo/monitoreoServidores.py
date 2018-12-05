@@ -9,11 +9,14 @@ from monitores.monitoreo_smtp import *
 from monitores.monitoreo_imap import *
 
 IP_SMTP_IMAP="10.10.0.3"  #IP del servidor de correo electronico
-IP_SSH = "192.168.0.8"
-U_SSH = "servidores"
-P_SSH = "12345678"
+IP_SSH = "10.10.10.2"
+U_SSH = "dream_walker"
+P_SSH = "1234"
 
-IP_HTTP = "192.168.0.8:8000"
+
+IP_HTTP = "10.10.10.2:8000"
+U_HTTP = "servidores"
+P_HTTP = "12345678"
 
 def monitoreo(tipo_servidor):  
   if tipo_servidor == 0: # Servidor SSH          
@@ -31,7 +34,7 @@ def monitoreo(tipo_servidor):
 def ssh_monitoreo():
   conexiones = obtener_conexiones_actuales_ssh(IP_SSH, U_SSH, P_SSH) # Se obtienen las conexiones actuales
   tiempos = obtener_tiempo_conexion_ssh(conexiones) # Se obtiene el tiempo de las conexiones previas
-  cliente_ftp = conectar_ftp(IP_SSH, U_SSH, P_SSH) # Conexion con cliente FTP  
+  cliente_ftp = conectar_ftp(IP_SSH, U_HTTP, P_HTTP) # Conexion con cliente FTP  
   bytes_enviados, bytes_recibidos = obtener_actividad_bytes_ssh(cliente_ftp, IP_SSH)
 
   respuesta = { "num_conexiones": len(conexiones),\
@@ -40,7 +43,7 @@ def ssh_monitoreo():
   return respuesta
 
 def ftp_monitoreo():
-  cliente_ftp = conectar_ftp(IP_SSH, U_SSH, P_SSH) # Conexion con cliente FTP
+  cliente_ftp = conectar_ftp(IP_SSH, U_HTTP, P_HTTP) # Conexion con cliente FTP
   tiempo_respuesta = obtener_tiempo_de_respuesta_ftp(cliente_ftp) # Se obtiene tiempo de respuesta
   
   return tiempo_respuesta
@@ -48,9 +51,9 @@ def ftp_monitoreo():
 def http_monitoreo():  
   # tiempo_respuesta = obtener_tiempo_de_respuesta_http(IP_HTTP) # Se obtiene tiempo de respuesta
   tiempo_respuesta, rec, code = obtener_tiempo_de_respuesta_http_post(IP_HTTP) # Se obtiene tiempo de respuesta
-  cliente_ftp = conectar_ftp(IP_SSH, U_SSH, P_SSH) # Conexion con cliente FTP  
+  cliente_ftp = conectar_ftp(IP_SSH, U_HTTP, P_HTTP) # Conexion con cliente FTP  
   bytes_recibidos = obtener_bytes_recibidos_http(cliente_ftp, IP_HTTP) # Se obtiene archivo pcap
-  ancho_de_banda = calcula_ancho_de_banda(IP_SSH)
+  ancho_de_banda = 1#calcula_ancho_de_banda(IP_SSH)
   
   #respuesta = { "tiempo_respuesta": tiempo_respuesta,
   # "bytes_recibidos": bytes_recibidos,
@@ -64,7 +67,7 @@ def http_monitoreo():
   return respuesta
 
 def cups_monitoreo():
-  ssh_remoto = conectar_ssh(IP_SSH, U_SSH, P_SSH)
+  ssh_remoto = conectar_ssh(IP_SSH, U_HTTP, P_HTTP)
   
   return obtener_estado_impresoras(ssh_remoto, IP_SSH)
 
